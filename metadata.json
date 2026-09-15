@@ -1,0 +1,6 @@
+{
+  "name": "SPIC Nagar Assessment Portal",
+  "description": "Universal Digital Assessment Portal for SPIC Nagar Higher Secondary School with secure real-time examination results analysis and multi-tier authentication.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

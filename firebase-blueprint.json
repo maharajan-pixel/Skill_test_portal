@@ -1,0 +1,53 @@
+{
+  "collections": [
+    {
+      "name": "exams",
+      "description": "Collection of active and archived exams",
+      "fields": [
+        { "name": "title", "type": "string" },
+        { "name": "subject", "type": "string" },
+        { "name": "classSec", "type": "string" },
+        { "name": "allowedTeachers", "type": "array" },
+        { "name": "status", "type": "string", "enum": ["ACTIVE", "CLOSED"] },
+        { "name": "scoreStatus", "type": "string", "enum": ["AUTO", "RELEASED"] },
+        { "name": "examMins", "type": "number" },
+        { "name": "qCount", "type": "number" },
+        { "name": "targetUrl", "type": "string" },
+        { "name": "questions", "type": "array" },
+        { "name": "createdAt", "type": "timestamp" }
+      ]
+    },
+    {
+      "name": "submissions",
+      "description": "Student exam submissions with analytics and breakdowns",
+      "fields": [
+        { "name": "examId", "type": "string" },
+        { "name": "admnNo", "type": "string" },
+        { "name": "name", "type": "string" },
+        { "name": "classSec", "type": "string" },
+        { "name": "score", "type": "string" },
+        { "name": "correct", "type": "number" },
+        { "name": "wrong", "type": "number" },
+        { "name": "skipped", "type": "number" },
+        { "name": "timeUsed", "type": "string" },
+        { "name": "secsConsumed", "type": "number" },
+        { "name": "categoryBreakdown", "type": "string" },
+        { "name": "detailedAnswers", "type": "map" },
+        { "name": "submittedAt", "type": "timestamp" }
+      ]
+    },
+    {
+      "name": "roster",
+      "description": "Pre-registered student, teacher, and administrator credentials",
+      "fields": [
+        { "name": "role", "type": "string", "enum": ["STUDENT", "TEACHER", "ADMIN"] },
+        { "name": "userId", "type": "string" },
+        { "name": "password", "type": "string" },
+        { "name": "name", "type": "string" },
+        { "name": "admnNo", "type": "string" },
+        { "name": "classSec", "type": "string" },
+        { "name": "email", "type": "string" }
+      ]
+    }
+  ]
+}

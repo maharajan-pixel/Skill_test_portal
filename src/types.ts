@@ -65,6 +65,7 @@ export interface ExamDocument {
   scoreStatus: 'AUTO' | 'RELEASED';
   examMins: number;
   qCount: number;
+  totalMarks?: number;
   targetUrl: string;
   questions: QuestionItem[];
   createdAt?: any;
@@ -77,6 +78,8 @@ export interface SubmissionDocument {
   name: string;
   classSec: string;
   score: string; // e.g. "8 out of 10"
+  earnedPoints?: number;
+  totalMarks?: number;
   correct: number;
   wrong: number;
   skipped: number;

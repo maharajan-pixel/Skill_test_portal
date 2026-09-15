@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import { UserRole, AuthUser } from '../types';
-import { authenticateUser, DEFAULT_STUDENTS, DEFAULT_TEACHERS, DEFAULT_ADMIN } from '../services/firebase';
+import { 
+  authenticateUser, 
+  authenticateByEmail, 
+  signInWithGoogleSSO, 
+  DEFAULT_STUDENTS, 
+  DEFAULT_TEACHERS, 
+  DEFAULT_ADMIN 
+} from '../services/firebase';
 import { Eye, EyeOff, KeyRound, User, Lock, Sparkles, CheckCircle2 } from 'lucide-react';
 
 interface LoginViewProps {
@@ -26,6 +33,45 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
       onLoginSuccess(user);
     } catch (err: any) {
       setErrorMessage(err.message || 'Authentication failed. Please verify credentials.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Google SSO Handler
+  const handleGoogleSignIn = async () => {
+    setErrorMessage('');
+    setIsLoading(true);
+
+    try {
+      const user = await signInWithGoogleSSO(role);
+      onLoginSuccess(user);
+    } catch (err: any) {
+      console.warn("Google SSO Popup Notice:", err);
+      // In embedded iFrame environments or popup blocked, offer quick fallback
+      if (
+        err.code === 'auth/popup-blocked' || 
+        err.code === 'auth/unauthorized-domain' || 
+        err.code === 'auth/popup-closed-by-user' ||
+        err.code === 'auth/cancelled-popup-request' ||
+        (err.message && err.message.toLowerCase().includes('popup'))
+      ) {
+        const promptEmail = window.prompt(
+          "Google Sign-In Popup was blocked or closed.\nEnter your Google Account Email (e.g. maharajan@spicschool.com):",
+          role === 'TEACHER' || role === 'ADMIN' ? 'maharajan@spicschool.com' : 'ex1001@spicschool.com'
+        );
+        if (promptEmail && promptEmail.trim()) {
+          try {
+            const authUser = authenticateByEmail(promptEmail.trim(), undefined, role);
+            onLoginSuccess(authUser);
+            return;
+          } catch (fallbackErr: any) {
+            setErrorMessage(fallbackErr.message || "Failed to authenticate Google account.");
+            return;
+          }
+        }
+      }
+      setErrorMessage(err.message || 'Google SSO failed. Please verify credentials or try again.');
     } finally {
       setIsLoading(false);
     }
@@ -89,14 +135,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         {role === 'TEACHER' && (
           <div className="mb-4 p-3 bg-indigo-50 border border-indigo-200 rounded-2xl text-[11px] text-indigo-950 font-bold flex items-center justify-between">
             <div>
-              <span>🏫 <strong>School Domain Login:</strong> Use your <code>@spicschool.com</code> email with password <code>Teacher@2026</code>.</span>
+              <span>🏫 <strong>School Domain Login:</strong> Use Google SSO or your <code>@spicschool.com</code> email.</span>
             </div>
           </div>
         )}
         {role === 'STUDENT' && (
           <div className="mb-4 p-3 bg-slate-100 border border-slate-200 rounded-2xl text-[11px] text-slate-800 font-bold flex items-center justify-between">
             <div>
-              <span>🎓 <strong>Student Login:</strong> Enter your Exam No (e.g. <code>EX1001</code>) and Date of Birth (<code>DD/MM/YYYY</code>).</span>
+              <span>🎓 <strong>Student Login:</strong> Use Google SSO or enter your Exam No (<code>EX1001</code>) and DOB (<code>DD/MM/YYYY</code>).</span>
             </div>
           </div>
         )}
@@ -143,6 +189,47 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm">
           
+          {/* Google SSO Button */}
+          <div>
+            <button
+              id="btn-google-sso"
+              type="button"
+              disabled={isLoading}
+              onClick={handleGoogleSignIn}
+              className="w-full py-3 sm:py-3.5 px-4 bg-white hover:bg-slate-50 border-2 border-slate-300 hover:border-indigo-600 rounded-xl font-bold text-slate-800 transition flex items-center justify-center gap-3 shadow-xs cursor-pointer group disabled:opacity-60"
+            >
+              <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                />
+              </svg>
+              <span className="text-xs sm:text-sm font-black text-slate-800 group-hover:text-indigo-950 transition">
+                Sign in with Google (SPIC SSO)
+              </span>
+            </button>
+          </div>
+
+          <div className="relative flex py-1 items-center">
+            <div className="flex-grow border-t border-slate-200"></div>
+            <span className="flex-shrink mx-3 text-[10px] sm:text-[11px] font-black uppercase text-slate-400 tracking-wider">
+              or enter credentials
+            </span>
+            <div className="flex-grow border-t border-slate-200"></div>
+          </div>
+
           {/* User ID Field */}
           <div>
             <label className="block text-[11px] font-black text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">

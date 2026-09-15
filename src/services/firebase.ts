@@ -6,12 +6,19 @@ import {
   getDocs, 
   addDoc, 
   updateDoc, 
+  deleteDoc,
   onSnapshot, 
   query, 
   where, 
   serverTimestamp,
   orderBy
 } from 'firebase/firestore';
+import { 
+  getAuth, 
+  signInWithPopup, 
+  GoogleAuthProvider, 
+  signOut 
+} from 'firebase/auth';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { 
   ExamDocument, 
@@ -22,7 +29,8 @@ import {
   AdminUser, 
   QuestionItem,
   StudentRecord,
-  TeacherRecord
+  TeacherRecord,
+  UserRole
 } from '../types';
 
 // Initialize Firebase App
@@ -32,6 +40,10 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const db = firebaseConfig.firestoreDatabaseId 
   ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
   : getFirestore(app);
+
+// Initialize Firebase Auth
+export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
 
 // Default Questions for SPIC Science Examination
 const SAMPLE_SCIENCE_QUESTIONS: QuestionItem[] = [
@@ -550,15 +562,20 @@ export async function submitExamAttempt(
     throw new Error("SECURITY BLOCK: You have already submitted this examination.");
   }
 
-  // Calculate grading and category breakdown
+  // Calculate grading, points, and category breakdown
   let correct = 0;
   let wrong = 0;
   let skipped = 0;
+  let earnedPoints = 0;
+  let totalPointsPossible = 0;
   const catStats: Record<string, { c: number; t: number }> = {};
   const detailedAnswers: Record<string, string | number> = {};
 
   questions.forEach(q => {
     const cat = q.category ? q.category.toUpperCase().trim() : "GENERAL";
+    const qPoints = typeof q.points === 'number' && !isNaN(q.points) ? q.points : 1;
+    totalPointsPossible += qPoints;
+
     if (!catStats[cat]) catStats[cat] = { c: 0, t: 0 };
     catStats[cat].t++;
 
@@ -571,6 +588,7 @@ export async function submitExamAttempt(
       detailedAnswers[q.id] = q.options.find(o => o.o === chosenNum)?.t || chosenNum;
       if (chosenNum === q.correctAnswer) {
         correct++;
+        earnedPoints += qPoints;
         catStats[cat].c++;
       } else {
         wrong++;
@@ -587,8 +605,11 @@ export async function submitExamAttempt(
   }
   const categoryBreakdown = breakdownParts.length > 0 ? breakdownParts.join(" | ") : "-";
 
-  const totalQuestions = questions.length;
-  const score = `${correct} out of ${totalQuestions}`;
+  // Check if exam defines a custom totalMarks
+  const exams = getLocalExams();
+  const exam = exams.find(x => x.id === examId);
+  const maxMarks = exam?.totalMarks || totalPointsPossible || questions.length;
+  const score = `${earnedPoints} out of ${maxMarks}`;
   const m = Math.floor(secsConsumed / 60);
   const s = secsConsumed % 60;
   const timeUsed = `${m}m ${s}s`;
@@ -599,6 +620,8 @@ export async function submitExamAttempt(
     name: student.name,
     classSec: student.classSec,
     score,
+    earnedPoints,
+    totalMarks: maxMarks,
     correct,
     wrong,
     skipped,
@@ -773,11 +796,55 @@ export async function bulkAddStudents(students: StudentRecord[]): Promise<number
   return addedCount;
 }
 
+// Update student in roster
+export async function updateStudentRecord(oldExamNo: string, updatedStudent: StudentRecord): Promise<void> {
+  const current = getLocalStudents();
+  const index = current.findIndex(s => s.examNo.toLowerCase() === oldExamNo.toLowerCase());
+  let updatedList: StudentRecord[];
+  if (index >= 0) {
+    updatedList = [...current];
+    updatedList[index] = updatedStudent;
+  } else {
+    updatedList = [updatedStudent, ...current];
+  }
+  saveLocalStudents(updatedList);
+
+  // Firestore background sync
+  try {
+    const q = query(collection(db, 'roster'), where('type', '==', 'STUDENT'), where('examNo', '==', oldExamNo));
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      for (const d of snap.docs) {
+        await updateDoc(doc(db, 'roster', d.id), {
+          ...updatedStudent,
+          updatedAt: serverTimestamp()
+        });
+      }
+    } else {
+      await addDoc(collection(db, 'roster'), {
+        ...updatedStudent,
+        type: 'STUDENT',
+        createdAt: serverTimestamp()
+      });
+    }
+  } catch (err) {
+    console.warn("Firestore updateStudentRecord fallback:", err);
+  }
+}
+
 // Delete student from roster
 export async function deleteStudentRecord(examNo: string): Promise<void> {
   const current = getLocalStudents();
   const updated = current.filter(s => s.examNo.toLowerCase() !== examNo.toLowerCase());
   saveLocalStudents(updated);
+
+  try {
+    const q = query(collection(db, 'roster'), where('type', '==', 'STUDENT'), where('examNo', '==', examNo));
+    const snap = await getDocs(q);
+    snap.forEach(d => {
+      deleteDoc(doc(db, 'roster', d.id)).catch(() => {});
+    });
+  } catch (e) {}
 }
 
 // Add single teacher to roster
@@ -804,6 +871,42 @@ export async function addTeacherRecord(teacher: TeacherRecord): Promise<void> {
     });
   } catch (err) {
     console.warn("Firestore roster write fallback:", err);
+  }
+}
+
+// Update teacher in roster
+export async function updateTeacherRecord(oldEmail: string, updatedTeacher: TeacherRecord): Promise<void> {
+  const current = getLocalTeachers();
+  const index = current.findIndex(t => t.email.toLowerCase() === oldEmail.toLowerCase());
+  let updatedList: TeacherRecord[];
+  if (index >= 0) {
+    updatedList = [...current];
+    updatedList[index] = updatedTeacher;
+  } else {
+    updatedList = [updatedTeacher, ...current];
+  }
+  saveLocalTeachers(updatedList);
+
+  // Firestore background sync
+  try {
+    const q = query(collection(db, 'roster'), where('type', '==', 'TEACHER'), where('email', '==', oldEmail.toLowerCase()));
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      for (const d of snap.docs) {
+        await updateDoc(doc(db, 'roster', d.id), {
+          ...updatedTeacher,
+          updatedAt: serverTimestamp()
+        });
+      }
+    } else {
+      await addDoc(collection(db, 'roster'), {
+        ...updatedTeacher,
+        type: 'TEACHER',
+        createdAt: serverTimestamp()
+      });
+    }
+  } catch (err) {
+    console.warn("Firestore updateTeacherRecord fallback:", err);
   }
 }
 
@@ -844,6 +947,14 @@ export async function deleteTeacherRecord(email: string): Promise<void> {
   const current = getLocalTeachers();
   const updated = current.filter(t => t.email.toLowerCase() !== email.toLowerCase());
   saveLocalTeachers(updated);
+
+  try {
+    const q = query(collection(db, 'roster'), where('type', '==', 'TEACHER'), where('email', '==', email.toLowerCase()));
+    const snap = await getDocs(q);
+    snap.forEach(d => {
+      deleteDoc(doc(db, 'roster', d.id)).catch(() => {});
+    });
+  } catch (e) {}
 }
 
 // Authentication Service
@@ -913,4 +1024,101 @@ export function authenticateUser(role: 'STUDENT' | 'TEACHER' | 'ADMIN', userId: 
     }
     throw new Error("Invalid Master Administrator Credentials.");
   }
+}
+
+// Google SSO Authenticator by Email
+export function authenticateByEmail(
+  email: string, 
+  displayName?: string, 
+  preferredRole?: UserRole
+): AuthUser {
+  const cleanEmail = email.trim().toLowerCase();
+
+  // 1. If user requested Admin or has Admin email
+  if (
+    preferredRole === 'ADMIN' || 
+    cleanEmail === DEFAULT_ADMIN.email || 
+    cleanEmail === 'admin@spicschool.com'
+  ) {
+    return {
+      role: 'ADMIN',
+      adminId: DEFAULT_ADMIN.adminId,
+      name: displayName || (cleanEmail.includes('maharajan') ? 'Mr. Maharajan (Administrator)' : DEFAULT_ADMIN.name)
+    };
+  }
+
+  // 2. Check Teacher Roster
+  const teachers = getLocalTeachers();
+  const matchedTeacher = teachers.find(t => t.email.toLowerCase() === cleanEmail);
+  if (matchedTeacher) {
+    return {
+      role: 'TEACHER',
+      email: matchedTeacher.email,
+      name: matchedTeacher.name || displayName || 'Faculty Member',
+      assignedClasses: matchedTeacher.assigned
+    };
+  }
+
+  // 3. SPIC School Google Workspace Domain (@spicschool.com)
+  if (cleanEmail.endsWith('@spicschool.com')) {
+    // Auto-create faculty member in roster
+    const staffName = displayName || cleanEmail.split('@')[0].replace('.', ' ').toUpperCase();
+    const newFaculty: TeacherRecord = {
+      email: cleanEmail,
+      pass: 'Teacher@2026',
+      name: cleanEmail.startsWith('maharajan') ? 'Mr. Maharajan (Senior Faculty)' : `Faculty (${staffName})`,
+      assigned: ['10 A', '10 B', '11 A', '12 A']
+    };
+    addTeacherRecord(newFaculty).catch(() => {});
+
+    return {
+      role: 'TEACHER',
+      email: newFaculty.email,
+      name: newFaculty.name,
+      assignedClasses: newFaculty.assigned
+    };
+  }
+
+  // 4. Check Student Roster
+  const students = getLocalStudents();
+  const matchedStudent = students.find(s => 
+    cleanEmail.includes(s.examNo.toLowerCase()) || 
+    cleanEmail.includes(s.admnNo.toLowerCase().replace(/[^a-z0-9]/g, '')) ||
+    (s.name && cleanEmail.split('@')[0].replace(/[^a-z]/g, '').includes(s.name.toLowerCase().replace(/[^a-z]/g, '')))
+  );
+
+  if (matchedStudent) {
+    return {
+      role: 'STUDENT',
+      admnNo: matchedStudent.admnNo,
+      name: matchedStudent.name,
+      classSec: matchedStudent.classSec,
+      examNo: matchedStudent.examNo
+    };
+  }
+
+  // If user selected student role specifically
+  if (preferredRole === 'STUDENT') {
+    throw new Error(`The Google Account (${cleanEmail}) is not linked to any student Exam Number in the roster. Please log in using your Exam Number and DOB, or ask your administrator to register your account.`);
+  }
+
+  // If user selected teacher role specifically
+  if (preferredRole === 'TEACHER') {
+    throw new Error(`The Google Account (${cleanEmail}) is not found in the SPIC School faculty roster. Please use your official @spicschool.com school email or contact the school office.`);
+  }
+
+  throw new Error(`Google Account (${cleanEmail}) is not registered in SPIC School records. Please use your school domain account (@spicschool.com).`);
+}
+
+// Google Sign In via Firebase Auth Popup
+export async function signInWithGoogleSSO(preferredRole?: UserRole): Promise<AuthUser> {
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
+  
+  const result = await signInWithPopup(auth, provider);
+  const user = result.user;
+  const email = (user.email || '').trim();
+  const displayName = user.displayName || email.split('@')[0];
+
+  return authenticateByEmail(email, displayName, preferredRole);
 }

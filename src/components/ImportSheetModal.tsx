@@ -15,6 +15,7 @@ import {
   FileText
 } from 'lucide-react';
 import { ExamDocument, QuestionItem } from '../types';
+import { ClassSectionSelector } from './ClassSectionSelector';
 
 interface ImportSheetModalProps {
   isOpen: boolean;
@@ -33,6 +34,8 @@ export const ImportSheetModal: React.FC<ImportSheetModalProps> = ({
   const [subject, setSubject] = useState('Science (Physical & Biological)');
   const [classSec, setClassSec] = useState('10 A');
   const [examMins, setExamMins] = useState(10);
+  const [totalMarks, setTotalMarks] = useState<number | string>(6);
+  const [isManualMarks, setIsManualMarks] = useState(false);
   const [allowedTeachersInput, setAllowedTeachersInput] = useState(
     currentTeacherEmail || 'maharajan@spicschool.com, teacher.science@spicschool.com'
   );
@@ -54,6 +57,7 @@ export const ImportSheetModal: React.FC<ImportSheetModalProps> = ({
     setSubject('Science (Physical & Biological)');
     setClassSec('10 A');
     setExamMins(10);
+    setTotalMarks(6);
     setSheetUrl('https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit');
     
     // Exact user header format in tab-separated format (as copied directly from Google Sheets / Excel)
@@ -222,6 +226,10 @@ export const ImportSheetModal: React.FC<ImportSheetModalProps> = ({
       setParsedQuestions(qItems);
       if (qItems.length > 0) {
         setParseError('');
+        if (!isManualMarks) {
+          const sumPoints = qItems.reduce((acc, q) => acc + (q.points || 1), 0);
+          setTotalMarks(sumPoints || qItems.length);
+        }
       } else {
         setParseError('Could not identify valid questions. Please ensure rows have Question Text and Options.');
       }
@@ -298,6 +306,7 @@ export const ImportSheetModal: React.FC<ImportSheetModalProps> = ({
         scoreStatus: 'AUTO',
         examMins: Number(examMins) || 10,
         qCount: parsedQuestions.length,
+        totalMarks: Number(totalMarks) || parsedQuestions.length,
         targetUrl: sheetUrl.trim() || 'https://docs.google.com/spreadsheets/d/custom_db/edit',
         questions: parsedQuestions
       };
@@ -454,44 +463,63 @@ export const ImportSheetModal: React.FC<ImportSheetModalProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-[11px] uppercase tracking-wider text-slate-500 mb-1">
-                    Target Class & Section
-                  </label>
-                  <select
+                  <ClassSectionSelector
+                    id="import-target-class-sec"
                     value={classSec}
-                    onChange={e => setClassSec(e.target.value)}
-                    className="w-full border-2 border-slate-200 rounded-xl p-2.5 bg-slate-50 font-bold text-slate-900 focus:border-indigo-600 outline-none"
-                  >
-                    <option value="10 A">Class 10 A</option>
-                    <option value="10 B">Class 10 B</option>
-                    <option value="11 A">Class 11 A</option>
-                    <option value="11 B">Class 11 B</option>
-                    <option value="12 A">Class 12 A</option>
-                    <option value="12 B">Class 12 B</option>
-                  </select>
+                    onChange={setClassSec}
+                    label="Target Class & Section"
+                    helpText="Classes VI-X (Sec A-D) or XI-XII (CS/BIO/CA/BM)"
+                  />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] uppercase tracking-wider text-slate-500 mb-1">
-                    Total Time (Minutes)
+                  <label htmlFor="import-exam-mins" className="block text-[11px] uppercase tracking-wider text-slate-500 mb-1 font-bold">
+                    Total Time (Minutes) *
                   </label>
                   <input
+                    id="import-exam-mins"
                     type="number"
                     min="2"
                     max="180"
                     value={examMins}
                     onChange={e => setExamMins(parseInt(e.target.value) || 10)}
-                    className="w-full border-2 border-slate-200 rounded-xl p-2.5 bg-slate-50 font-bold text-slate-900 focus:border-indigo-600 outline-none"
+                    className="w-full border-2 border-slate-200 rounded-xl p-2.5 bg-slate-50 font-bold text-xs text-slate-900 focus:border-indigo-600 outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] uppercase tracking-wider text-slate-500 mb-1">
-                    Assigned Teacher Emails (Comma-separated)
+                  <div className="flex items-center justify-between mb-1">
+                    <label htmlFor="import-total-marks" className="block text-[11px] uppercase tracking-wider text-slate-500 font-bold">
+                      Total Marks *
+                    </label>
+                    <span className="text-[10px] text-indigo-600 font-black">
+                      {parsedQuestions.length > 0 ? `(${parsedQuestions.length} Qs detected)` : ''}
+                    </span>
+                  </div>
+                  <input
+                    id="import-total-marks"
+                    type="number"
+                    min="1"
+                    max="1000"
+                    required
+                    value={totalMarks}
+                    onChange={e => {
+                      setTotalMarks(e.target.value);
+                      setIsManualMarks(true);
+                    }}
+                    placeholder="e.g. 25, 50, 100"
+                    className="w-full border-2 border-slate-200 rounded-xl p-2.5 bg-slate-50 font-bold text-xs text-slate-900 focus:border-indigo-600 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="import-teachers-input" className="block text-[11px] uppercase tracking-wider text-slate-500 mb-1 font-bold">
+                    Assigned Teacher Emails
                   </label>
                   <input
+                    id="import-teachers-input"
                     type="text"
                     value={allowedTeachersInput}
                     onChange={e => setAllowedTeachersInput(e.target.value)}
@@ -568,7 +596,7 @@ export const ImportSheetModal: React.FC<ImportSheetModalProps> = ({
                     {title || 'Untitled Assessment Paper'} ({classSec})
                   </h4>
                   <p className="text-xs text-indigo-700 font-medium">
-                    Duration: {examMins} Mins • Total Questions: {parsedQuestions.length}
+                    Duration: {examMins} Mins • Total Questions: {parsedQuestions.length} • Total Marks: {totalMarks}
                   </p>
                 </div>
 

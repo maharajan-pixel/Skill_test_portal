@@ -6,6 +6,7 @@ import {
   Upload, 
   Download, 
   Trash2, 
+  Pencil,
   Sparkles, 
   Search, 
   Mail, 
@@ -15,18 +16,24 @@ import {
   CheckCircle2, 
   FileSpreadsheet, 
   Info,
-  Calendar
+  Calendar,
+  Save,
+  Check
 } from 'lucide-react';
 import { StudentRecord, TeacherRecord } from '../types';
+import { ClassSectionSelector } from './ClassSectionSelector';
+import { SPIC_CLASS_STRUCTURE } from '../constants/schoolStructure';
 import { 
   getLocalStudents, 
   saveLocalStudents, 
   getLocalTeachers, 
   saveLocalTeachers,
   addStudentRecord,
+  updateStudentRecord,
   bulkAddStudents,
   deleteStudentRecord,
   addTeacherRecord,
+  updateTeacherRecord,
   bulkAddTeachers,
   deleteTeacherRecord
 } from '../services/firebase';
@@ -65,6 +72,24 @@ export const RosterManagerModal: React.FC<RosterManagerModalProps> = ({
   const [bulkMode, setBulkMode] = useState(false);
   const [bulkText, setBulkText] = useState('');
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'SUCCESS' | 'ERROR'; text: string } | null>(null);
+
+  // Edit Modal States
+  const [editingStudent, setEditingStudent] = useState<{
+    originalExamNo: string;
+    examNo: string;
+    name: string;
+    classSec: string;
+    admnNo: string;
+    dob: string;
+  } | null>(null);
+
+  const [editingTeacher, setEditingTeacher] = useState<{
+    originalEmail: string;
+    email: string;
+    name: string;
+    assigned: string;
+    pass: string;
+  } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -142,6 +167,42 @@ export const RosterManagerModal: React.FC<RosterManagerModalProps> = ({
     }
   };
 
+  // Start Edit Student
+  const handleStartEditStudent = (st: StudentRecord) => {
+    setEditingStudent({
+      originalExamNo: st.examNo,
+      examNo: st.examNo,
+      name: st.name,
+      classSec: st.classSec,
+      admnNo: st.admnNo,
+      dob: st.dob
+    });
+  };
+
+  // Save Edit Student
+  const handleSaveStudentEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingStudent) return;
+    if (!editingStudent.examNo.trim() || !editingStudent.name.trim() || !editingStudent.dob.trim()) {
+      setFeedbackMsg({ type: 'ERROR', text: 'Exam Number, Full Name, and DOB are required.' });
+      return;
+    }
+
+    const updated: StudentRecord = {
+      examNo: editingStudent.examNo.trim().toUpperCase(),
+      name: editingStudent.name.trim(),
+      classSec: editingStudent.classSec.trim(),
+      admnNo: editingStudent.admnNo.trim() || `SPIC-${Math.floor(1000 + Math.random() * 9000)}`,
+      dob: editingStudent.dob.trim()
+    };
+
+    await updateStudentRecord(editingStudent.originalExamNo, updated);
+    loadRosterData();
+    setEditingStudent(null);
+    setFeedbackMsg({ type: 'SUCCESS', text: `Student ${updated.name} (${updated.examNo}) updated successfully!` });
+    onRosterUpdated?.();
+  };
+
   // Delete Teacher
   const handleDeleteTeacher = async (email: string) => {
     if (window.confirm(`Are you sure you want to remove staff member ${email}?`)) {
@@ -149,6 +210,41 @@ export const RosterManagerModal: React.FC<RosterManagerModalProps> = ({
       loadRosterData();
       onRosterUpdated?.();
     }
+  };
+
+  // Start Edit Teacher
+  const handleStartEditTeacher = (tc: TeacherRecord) => {
+    setEditingTeacher({
+      originalEmail: tc.email,
+      email: tc.email,
+      name: tc.name,
+      assigned: tc.assigned?.join(', ') || '10 A, 10 B',
+      pass: tc.pass || 'Teacher@2026'
+    });
+  };
+
+  // Save Edit Teacher
+  const handleSaveTeacherEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTeacher) return;
+    if (!editingTeacher.email.trim() || !editingTeacher.name.trim()) {
+      setFeedbackMsg({ type: 'ERROR', text: 'Faculty Name and Email are required.' });
+      return;
+    }
+
+    const assigned = editingTeacher.assigned.split(',').map(s => s.trim()).filter(Boolean);
+    const updated: TeacherRecord = {
+      email: editingTeacher.email.trim().toLowerCase(),
+      name: editingTeacher.name.trim(),
+      pass: editingTeacher.pass.trim() || 'Teacher@2026',
+      assigned: assigned.length > 0 ? assigned : ['10 A']
+    };
+
+    await updateTeacherRecord(editingTeacher.originalEmail, updated);
+    loadRosterData();
+    setEditingTeacher(null);
+    setFeedbackMsg({ type: 'SUCCESS', text: `Faculty member ${updated.name} (${updated.email}) updated successfully!` });
+    onRosterUpdated?.();
   };
 
   // Bulk Import handler
@@ -418,13 +514,23 @@ teacher.biology@spicschool.com\tMrs. P. Subbulakshmi\tTeacher@2026\t10 A, 10 B`)
                   <select
                     value={selectedClass}
                     onChange={e => setSelectedClass(e.target.value)}
-                    className="border-2 border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-bold bg-slate-50 focus:border-indigo-600 outline-none"
+                    className="border-2 border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-bold bg-slate-50 focus:border-indigo-600 outline-none max-w-[200px]"
                   >
-                    <option value="ALL">All Classes</option>
-                    <option value="10 A">Class 10 A</option>
-                    <option value="10 B">Class 10 B</option>
-                    <option value="11 A">Class 11 A</option>
-                    <option value="12 A">Class 12 A</option>
+                    <option value="ALL">All Classes & Sections</option>
+                    {SPIC_CLASS_STRUCTURE.map(group => (
+                      <optgroup key={group.group} label={group.group}>
+                        {group.options.map(opt => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                    {Array.from(new Set(students.map(s => s.classSec)))
+                      .filter(c => c && !SPIC_CLASS_STRUCTURE.some(g => g.options.some(o => o.value === c)))
+                      .map(c => (
+                        <option key={c} value={c}>Custom: {c}</option>
+                      ))}
                   </select>
 
                   <div className="relative flex-1 sm:w-48">
@@ -511,20 +617,13 @@ teacher.biology@spicschool.com\tMrs. P. Subbulakshmi\tTeacher@2026\t10 A, 10 B`)
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-[10px] uppercase font-bold text-slate-500 mb-1">
-                      Class & Section
-                    </label>
-                    <select
+                  <div className="sm:col-span-1">
+                    <ClassSectionSelector
+                      id="roster-add-class-sec"
                       value={stClassSec}
-                      onChange={e => setStClassSec(e.target.value)}
-                      className="w-full border-2 border-slate-200 rounded-xl p-2 bg-white font-bold text-xs text-slate-900 focus:border-indigo-600 outline-none"
-                    >
-                      <option value="10 A">Class 10 A</option>
-                      <option value="10 B">Class 10 B</option>
-                      <option value="11 A">Class 11 A</option>
-                      <option value="12 A">Class 12 A</option>
-                    </select>
+                      onChange={setStClassSec}
+                      label="Class & Section"
+                    />
                   </div>
 
                   <div>
@@ -585,14 +684,24 @@ teacher.biology@spicschool.com\tMrs. P. Subbulakshmi\tTeacher@2026\t10 A, 10 B`)
                           <td className="p-3 font-mono text-slate-500">{st.admnNo}</td>
                           <td className="p-3 font-mono text-slate-600">{st.dob}</td>
                           <td className="p-3 text-right">
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteStudent(st.examNo)}
-                              title="Delete Student"
-                              className="text-slate-400 hover:text-rose-600 transition p-1 cursor-pointer"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleStartEditStudent(st)}
+                                title="Edit Student Record"
+                                className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition cursor-pointer"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteStudent(st.examNo)}
+                                title="Delete Student"
+                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))
@@ -773,14 +882,24 @@ teacher.biology@spicschool.com\tMrs. P. Subbulakshmi\tTeacher@2026\t10 A, 10 B`)
                         </td>
                         <td className="p-3 font-mono text-slate-500">{tc.pass}</td>
                         <td className="p-3 text-right">
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteTeacher(tc.email)}
-                            title="Delete Staff"
-                            className="text-slate-400 hover:text-rose-600 transition p-1 cursor-pointer"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleStartEditTeacher(tc)}
+                              title="Edit Faculty Member"
+                              className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition cursor-pointer"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteTeacher(tc.email)}
+                              title="Delete Staff"
+                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -839,6 +958,216 @@ teacher.biology@spicschool.com\tMrs. P. Subbulakshmi\tTeacher@2026\t10 A, 10 B`)
           )}
 
         </div>
+
+        {/* Edit Student Record Modal Dialog */}
+        {editingStudent && (
+          <div className="fixed inset-0 z-60 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+              <div className="bg-indigo-950 p-4 text-white flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-indigo-800/80 rounded-xl text-amber-300">
+                    <Pencil className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-sm text-white">Edit Student Record</h3>
+                    <p className="text-[11px] text-indigo-300">Original Exam No: <span className="font-mono font-bold text-amber-300">{editingStudent.originalExamNo}</span></p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditingStudent(null)}
+                  className="text-slate-400 hover:text-white p-1 rounded-lg transition cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveStudentEdit} className="p-5 space-y-4">
+                <div>
+                  <label className="block text-[11px] uppercase font-bold text-slate-500 mb-1">
+                    Candidate Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editingStudent.name}
+                    onChange={e => setEditingStudent({ ...editingStudent, name: e.target.value })}
+                    className="w-full border-2 border-slate-200 rounded-xl p-2.5 bg-slate-50 font-bold text-xs text-slate-900 focus:border-indigo-600 focus:bg-white outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] uppercase font-bold text-slate-500 mb-1">
+                      Exam Number (Login ID) *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editingStudent.examNo}
+                      onChange={e => setEditingStudent({ ...editingStudent, examNo: e.target.value.toUpperCase() })}
+                      className="w-full border-2 border-slate-200 rounded-xl p-2.5 bg-slate-50 font-mono font-black text-xs text-indigo-700 focus:border-indigo-600 focus:bg-white outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <ClassSectionSelector
+                      id="edit-student-class-sec"
+                      value={editingStudent.classSec}
+                      onChange={val => setEditingStudent({ ...editingStudent, classSec: val })}
+                      label="Class & Section"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] uppercase font-bold text-slate-500 mb-1">
+                      Admission Number
+                    </label>
+                    <input
+                      type="text"
+                      value={editingStudent.admnNo}
+                      onChange={e => setEditingStudent({ ...editingStudent, admnNo: e.target.value })}
+                      placeholder="e.g. SPIC-8801"
+                      className="w-full border-2 border-slate-200 rounded-xl p-2.5 bg-slate-50 font-mono text-xs text-slate-800 focus:border-indigo-600 focus:bg-white outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] uppercase font-bold text-slate-500 mb-1">
+                      Password / DOB (DD/MM/YYYY) *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editingStudent.dob}
+                      onChange={e => setEditingStudent({ ...editingStudent, dob: e.target.value })}
+                      placeholder="DD/MM/YYYY"
+                      className="w-full border-2 border-slate-200 rounded-xl p-2.5 bg-slate-50 font-mono font-bold text-xs text-slate-900 focus:border-indigo-600 focus:bg-white outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingStudent(null)}
+                    className="px-4 py-2 border border-slate-300 text-slate-700 font-bold text-xs rounded-xl hover:bg-slate-100 transition cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 bg-indigo-900 hover:bg-indigo-800 text-white font-black text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Check className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Save Changes</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Faculty Member Modal Dialog */}
+        {editingTeacher && (
+          <div className="fixed inset-0 z-60 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+              <div className="bg-indigo-950 p-4 text-white flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-indigo-800/80 rounded-xl text-amber-300">
+                    <Pencil className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-sm text-white">Edit Faculty Member</h3>
+                    <p className="text-[11px] text-indigo-300">Original Email: <span className="font-mono font-bold text-amber-300">{editingTeacher.originalEmail}</span></p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditingTeacher(null)}
+                  className="text-slate-400 hover:text-white p-1 rounded-lg transition cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveTeacherEdit} className="p-5 space-y-4">
+                <div>
+                  <label className="block text-[11px] uppercase font-bold text-slate-500 mb-1">
+                    Faculty Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editingTeacher.name}
+                    onChange={e => setEditingTeacher({ ...editingTeacher, name: e.target.value })}
+                    className="w-full border-2 border-slate-200 rounded-xl p-2.5 bg-slate-50 font-bold text-xs text-slate-900 focus:border-indigo-600 focus:bg-white outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] uppercase font-bold text-slate-500 mb-1">
+                    School Domain Email (@spicschool.com) *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={editingTeacher.email}
+                    onChange={e => setEditingTeacher({ ...editingTeacher, email: e.target.value.toLowerCase() })}
+                    className="w-full border-2 border-slate-200 rounded-xl p-2.5 bg-slate-50 font-mono font-bold text-xs text-indigo-700 focus:border-indigo-600 focus:bg-white outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] uppercase font-bold text-slate-500 mb-1">
+                      Assigned Classes
+                    </label>
+                    <input
+                      type="text"
+                      value={editingTeacher.assigned}
+                      onChange={e => setEditingTeacher({ ...editingTeacher, assigned: e.target.value })}
+                      placeholder="10 A, 10 B, 11 A"
+                      className="w-full border-2 border-slate-200 rounded-xl p-2.5 bg-slate-50 font-bold text-xs text-slate-900 focus:border-indigo-600 focus:bg-white outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] uppercase font-bold text-slate-500 mb-1">
+                      Password *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editingTeacher.pass}
+                      onChange={e => setEditingTeacher({ ...editingTeacher, pass: e.target.value })}
+                      className="w-full border-2 border-slate-200 rounded-xl p-2.5 bg-slate-50 font-mono font-bold text-xs text-slate-900 focus:border-indigo-600 focus:bg-white outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingTeacher(null)}
+                    className="px-4 py-2 border border-slate-300 text-slate-700 font-bold text-xs rounded-xl hover:bg-slate-100 transition cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 bg-indigo-900 hover:bg-indigo-800 text-white font-black text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Check className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Save Changes</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="bg-slate-100 p-4 border-t border-slate-200 flex justify-between items-center text-xs">

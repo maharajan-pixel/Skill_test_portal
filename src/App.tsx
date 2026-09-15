@@ -43,8 +43,51 @@ type AppView =
   | 'EXAM_RESULT';
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
-  const [currentView, setCurrentView] = useState<AppView>('LOGIN');
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => {
+    try {
+      const savedUser = localStorage.getItem('spic_cbt_user_session');
+      if (savedUser) {
+        return JSON.parse(savedUser);
+      }
+    } catch (e) {
+      console.warn("Failed to restore auth session:", e);
+    }
+    return null;
+  });
+
+  const [currentView, setCurrentView] = useState<AppView>(() => {
+    try {
+      const savedUser = localStorage.getItem('spic_cbt_user_session');
+      if (savedUser) {
+        const u = JSON.parse(savedUser);
+        const savedView = sessionStorage.getItem('spic_cbt_active_view');
+        if (savedView && ['STUDENT_DASHBOARD', 'TEACHER_DASHBOARD', 'ADMIN_DASHBOARD', 'REAL_TIME_ANALYTICS'].includes(savedView)) {
+          return savedView as AppView;
+        }
+        if (u.role === 'STUDENT') return 'STUDENT_DASHBOARD';
+        if (u.role === 'TEACHER') return 'TEACHER_DASHBOARD';
+        if (u.role === 'ADMIN') return 'ADMIN_DASHBOARD';
+      }
+    } catch (e) {}
+    return 'LOGIN';
+  });
+
+  // Keep localStorage in sync with currentUser
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem('spic_cbt_user_session', JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem('spic_cbt_user_session');
+      sessionStorage.removeItem('spic_cbt_active_view');
+    }
+  }, [currentUser]);
+
+  // Keep track of active view for refresh persistence
+  useEffect(() => {
+    if (currentView && currentView !== 'LOGIN') {
+      sessionStorage.setItem('spic_cbt_active_view', currentView);
+    }
+  }, [currentView]);
 
   // Firestore Data State
   const [exams, setExams] = useState<ExamDocument[]>([]);
@@ -142,6 +185,8 @@ export default function App() {
 
   // Handle Logout
   const handleLogout = () => {
+    localStorage.removeItem('spic_cbt_user_session');
+    sessionStorage.removeItem('spic_cbt_active_view');
     sessionStorage.removeItem('spic_exam_backup_v2');
     setCurrentUser(null);
     setActiveExam(null);

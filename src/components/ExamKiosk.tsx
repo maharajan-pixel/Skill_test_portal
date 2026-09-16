@@ -277,10 +277,34 @@ export const ExamKiosk: React.FC<ExamKioskProps> = ({
         if (backup.examId === exam.id && backup.currentUser.admnNo === student.admnNo) {
           setQList(backup.qList);
           setActiveQIndex(backup.activeQIndex);
-          setMasterTotalSecs(backup.masterTotalSecs);
-          setMasterGraceSecs(backup.masterGraceSecs);
-          setIsMasterGrace(backup.isMasterGrace);
-          setExamStartTime(backup.examStartTime || Date.now());
+          const startTime = backup.examStartTime || Date.now();
+          setExamStartTime(startTime);
+
+          // Wall-clock elapsed time calculation (prevents timer manipulation via page refresh)
+          const totalExamSeconds = exam.examMins * 60;
+          const elapsedSecs = Math.max(0, Math.floor((Date.now() - startTime) / 1000));
+          const remainingMainSecs = totalExamSeconds - elapsedSecs;
+
+          if (remainingMainSecs > 0) {
+            setMasterTotalSecs(remainingMainSecs);
+            setMasterGraceSecs(300);
+            setIsMasterGrace(false);
+          } else {
+            const graceElapsed = Math.abs(remainingMainSecs);
+            const remainingGraceSecs = 300 - graceElapsed;
+            if (remainingGraceSecs > 0) {
+              setMasterTotalSecs(0);
+              setMasterGraceSecs(remainingGraceSecs);
+              setIsMasterGrace(true);
+            } else {
+              setMasterTotalSecs(0);
+              setMasterGraceSecs(0);
+              setIsMasterGrace(true);
+              setTimeout(() => {
+                handleFinalSubmitExecution();
+              }, 500);
+            }
+          }
           if (backup.tabSwitchCount !== undefined) {
             setTabSwitchCount(backup.tabSwitchCount);
             tabSwitchCountRef.current = backup.tabSwitchCount;

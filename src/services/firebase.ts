@@ -28,6 +28,7 @@ import {
   TeacherUser, 
   AdminUser, 
   QuestionItem,
+  StudentQuestion,
   StudentRecord,
   TeacherRecord,
   UserRole
@@ -46,6 +47,7 @@ export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
 // Default Questions for SPIC Science Examination
+// Sanitized Question list - Client never receives or bundles correctAnswer fields
 const SAMPLE_SCIENCE_QUESTIONS: QuestionItem[] = [
   {
     id: "Q101",
@@ -57,7 +59,7 @@ const SAMPLE_SCIENCE_QUESTIONS: QuestionItem[] = [
       { t: "Ohm (Ω)", o: 2 },
       { t: "Joule (J)", o: 3 }
     ],
-    correctAnswer: 1
+    points: 1
   },
   {
     id: "Q102",
@@ -69,7 +71,7 @@ const SAMPLE_SCIENCE_QUESTIONS: QuestionItem[] = [
       { t: "Directly proportional to square of resistance", o: 2 },
       { t: "Independent of applied voltage", o: 3 }
     ],
-    correctAnswer: 1
+    points: 1
   },
   {
     id: "Q103",
@@ -81,7 +83,7 @@ const SAMPLE_SCIENCE_QUESTIONS: QuestionItem[] = [
       { t: "Convex mirror", o: 2 },
       { t: "Parabolic mirror", o: 3 }
     ],
-    correctAnswer: 2
+    points: 1
   },
   {
     id: "Q104",
@@ -93,7 +95,7 @@ const SAMPLE_SCIENCE_QUESTIONS: QuestionItem[] = [
       { t: "Decrease friction in the axle bearings", o: 2 },
       { t: "Convert alternating current into pulsating direct current", o: 3 }
     ],
-    correctAnswer: 0
+    points: 1
   },
   {
     id: "Q105",
@@ -105,7 +107,7 @@ const SAMPLE_SCIENCE_QUESTIONS: QuestionItem[] = [
       { t: "2.42", o: 2 },
       { t: "1.00", o: 3 }
     ],
-    correctAnswer: 2
+    points: 1
   },
   {
     id: "Q106",
@@ -117,7 +119,7 @@ const SAMPLE_SCIENCE_QUESTIONS: QuestionItem[] = [
       { t: "Superior vena cava", o: 2 },
       { t: "Systemic aorta", o: 3 }
     ],
-    correctAnswer: 1
+    points: 1
   },
   {
     id: "Q107",
@@ -129,7 +131,7 @@ const SAMPLE_SCIENCE_QUESTIONS: QuestionItem[] = [
       { t: "Large Intestine", o: 2 },
       { t: "Esophagus", o: 3 }
     ],
-    correctAnswer: 1
+    points: 1
   },
   {
     id: "Q108",
@@ -141,7 +143,7 @@ const SAMPLE_SCIENCE_QUESTIONS: QuestionItem[] = [
       { t: "Gibberellin", o: 2 },
       { t: "Ethylene", o: 3 }
     ],
-    correctAnswer: 1
+    points: 1
   },
   {
     id: "Q109",
@@ -153,7 +155,7 @@ const SAMPLE_SCIENCE_QUESTIONS: QuestionItem[] = [
       { t: "9:3:3:1", o: 2 },
       { t: "2:1", o: 3 }
     ],
-    correctAnswer: 1
+    points: 1
   },
   {
     id: "Q110",
@@ -165,29 +167,23 @@ const SAMPLE_SCIENCE_QUESTIONS: QuestionItem[] = [
       { t: "Collecting Duct", o: 2 },
       { t: "Proximal Convoluted Tubule", o: 3 }
     ],
-    correctAnswer: 0
+    points: 1
   }
 ];
 
-// Initial Roster
+// Client-safe placeholders for UI components (No complete rosters, credentials, or PII)
 export const DEFAULT_STUDENTS: StudentRecord[] = [
-  { examNo: "EX1001", dob: "15/08/2008", name: "S. Arun Kumar", classSec: "10 A", admnNo: "SPIC-8801" },
-  { examNo: "EX1002", dob: "22/11/2008", name: "P. Meenakshi", classSec: "10 A", admnNo: "SPIC-8802" },
-  { examNo: "EX1003", dob: "05/01/2008", name: "R. Vignesh", classSec: "10 A", admnNo: "SPIC-8803" },
-  { examNo: "EX1004", dob: "19/04/2008", name: "K. Divya", classSec: "10 A", admnNo: "SPIC-8804" },
-  { examNo: "EX1005", dob: "30/09/2008", name: "M. Karthik", classSec: "10 B", admnNo: "SPIC-8805" }
+  { examNo: "EX1001", dob: "15/08/2008", name: "S. Arun Kumar", classSec: "10 A", admnNo: "SPIC-8801" }
 ];
 
 export const DEFAULT_TEACHERS: TeacherRecord[] = [
-  { email: "maharajan@spicschool.com", pass: "Teacher@2026", name: "Mr. Maharajan (Senior Faculty)", assigned: ["10 A", "10 B", "11 A", "12 A"] },
-  { email: "teacher.science@spicschool.com", pass: "Teacher@2026", name: "Mrs. S. Jayashree (Science)", assigned: ["10 A", "10 B"] },
-  { email: "teacher.maths@spicschool.com", pass: "Teacher@2026", name: "Mr. K. Narayanan (Maths)", assigned: ["10 A"] }
+  { email: "maharajan@spicschool.com", name: "Mr. Maharajan (Senior Faculty)", assigned: ["10 A", "10 B", "11 A", "12 A"] },
+  { email: "teacher.science@spicschool.com", name: "Mrs. S. Jayashree (Science)", assigned: ["10 A", "10 B"] }
 ];
 
 export const DEFAULT_ADMIN = {
   adminId: "admin",
   email: "admin@spicschool.com",
-  pass: "SpicAdmin@2026",
   name: "Master Administrator - SPIC School"
 };
 
@@ -204,85 +200,10 @@ const DEFAULT_EXAMS: ExamDocument[] = [
     qCount: 10,
     targetUrl: "https://docs.google.com/spreadsheets/d/spic_science_db_10a/edit",
     questions: SAMPLE_SCIENCE_QUESTIONS
-  },
-  {
-    id: "spic-mat-10a",
-    title: "10 A - Quadratic Equations & Trigonometry",
-    subject: "Mathematics",
-    classSec: "10 A",
-    allowedTeachers: ["teacher.maths@spicschool.com"],
-    status: "ACTIVE",
-    scoreStatus: "RELEASED",
-    examMins: 15,
-    qCount: 8,
-    targetUrl: "https://docs.google.com/spreadsheets/d/spic_maths_db_10a/edit",
-    questions: SAMPLE_SCIENCE_QUESTIONS.slice(0, 8)
-  },
-  {
-    id: "spic-sci-10b",
-    title: "10 B - Formative Assessment",
-    subject: "Science (Physical & Biological)",
-    classSec: "10 B",
-    allowedTeachers: ["teacher.science@spicschool.com"],
-    status: "CLOSED",
-    scoreStatus: "AUTO",
-    examMins: 10,
-    qCount: 10,
-    targetUrl: "https://docs.google.com/spreadsheets/d/spic_science_db_10b/edit",
-    questions: SAMPLE_SCIENCE_QUESTIONS
   }
 ];
 
-const INITIAL_SUBMISSIONS: SubmissionDocument[] = [
-  {
-    id: "sub-1",
-    examId: "spic-sci-10a",
-    admnNo: "SPIC-8802",
-    name: "P. Meenakshi",
-    classSec: "10 A",
-    score: "9 out of 10",
-    correct: 9,
-    wrong: 1,
-    skipped: 0,
-    timeUsed: "6m 12s",
-    secsConsumed: 372,
-    categoryBreakdown: "PHY: 5/5 | BIO: 4/5",
-    detailedAnswers: { Q101: 1, Q102: 1, Q103: 2, Q104: 0, Q105: 2, Q106: 1, Q107: 1, Q108: 1, Q109: 1, Q110: 1 },
-    submittedAt: new Date(Date.now() - 1000 * 60 * 45).toISOString()
-  },
-  {
-    id: "sub-2",
-    examId: "spic-sci-10a",
-    admnNo: "SPIC-8803",
-    name: "R. Vignesh",
-    classSec: "10 A",
-    score: "8 out of 10",
-    correct: 8,
-    wrong: 2,
-    skipped: 0,
-    timeUsed: "8m 45s",
-    secsConsumed: 525,
-    categoryBreakdown: "PHY: 4/5 | BIO: 4/5",
-    detailedAnswers: { Q101: 1, Q102: 0, Q103: 2, Q104: 0, Q105: 2, Q106: 1, Q107: 1, Q108: 0, Q109: 1, Q110: 0 },
-    submittedAt: new Date(Date.now() - 1000 * 60 * 80).toISOString()
-  },
-  {
-    id: "sub-3",
-    examId: "spic-sci-10a",
-    admnNo: "SPIC-8804",
-    name: "K. Divya",
-    classSec: "10 A",
-    score: "7 out of 10",
-    correct: 7,
-    wrong: 2,
-    skipped: 1,
-    timeUsed: "7m 20s",
-    secsConsumed: 440,
-    categoryBreakdown: "PHY: 3/5 | BIO: 4/5",
-    detailedAnswers: { Q101: 1, Q102: 1, Q103: 1, Q104: 0, Q105: 2, Q106: 1, Q107: 1, Q108: 1, Q109: 0, Q110: "SKIPPED" },
-    submittedAt: new Date(Date.now() - 1000 * 60 * 120).toISOString()
-  }
-];
+const INITIAL_SUBMISSIONS: SubmissionDocument[] = [];
 
 // In-memory / local storage sync helper
 const STORAGE_KEY_EXAMS = 'spic_exams_cache_v2';
@@ -428,97 +349,87 @@ export async function seedInitialFirestoreData() {
   }
 }
 
-// Subscribe to active exams in real-time
+// Subscribe to active exams in real-time via authenticated Express API
 export function subscribeExams(callback: (exams: ExamDocument[]) => void) {
-  try {
-    const q = collection(db, 'exams');
-    return onSnapshot(q, (snapshot) => {
-      if (!snapshot.empty) {
-        const exams: ExamDocument[] = [];
-        const seen = new Set<string>();
-        snapshot.forEach((d) => {
-          const data = d.data() as ExamDocument;
-          const id = d.id;
-          if (!seen.has(id)) {
-            seen.add(id);
-            exams.push({ ...data, id });
-          }
-        });
-        saveLocalExams(exams);
-        callback(exams);
-      } else {
-        const local = getLocalExams();
-        callback(local);
+  let active = true;
+  const fetchExams = async () => {
+    try {
+      const res = await fetch('/api/exams');
+      if (res.ok) {
+        const data = await res.json();
+        if (active && data.exams) {
+          saveLocalExams(data.exams);
+          callback(data.exams);
+          return;
+        }
       }
-    }, (error) => {
-      console.warn("Real-time listener fallback:", error);
-      callback(getLocalExams());
-    });
-  } catch (e) {
-    callback(getLocalExams());
-    return () => {};
-  }
+    } catch (err) {
+      console.warn("[subscribeExams] API notice:", err);
+    }
+    if (active) callback(getLocalExams());
+  };
+
+  fetchExams();
+  const interval = setInterval(fetchExams, 6000);
+  return () => {
+    active = false;
+    clearInterval(interval);
+  };
 }
 
-// Subscribe to real-time submissions
+// Subscribe to real-time submissions via role-scoped Express API
 export function subscribeSubmissions(examId: string | null, callback: (subs: SubmissionDocument[]) => void) {
-  try {
-    const col = collection(db, 'submissions');
-    const q = examId 
-      ? query(col, where('examId', '==', examId))
-      : query(col, orderBy('submittedAt', 'desc'));
-
-    return onSnapshot(q, (snapshot) => {
-      const subs: SubmissionDocument[] = [];
-      const seen = new Set<string>();
-      snapshot.forEach((d) => {
-        const data = d.data();
-        const id = d.id;
-        if (!seen.has(id)) {
-          seen.add(id);
-          subs.push({
-            ...data,
-            id,
-            submittedAt: data.submittedAt?.toDate?.()?.toISOString() || data.submittedAt || new Date().toISOString()
-          } as SubmissionDocument);
+  let active = true;
+  const fetchSubs = async () => {
+    try {
+      const res = await fetch('/api/exams/submissions');
+      if (res.ok) {
+        const data = await res.json();
+        if (active && data.submissions) {
+          const subs: SubmissionDocument[] = data.submissions;
+          saveLocalSubs(subs);
+          const filtered = examId ? subs.filter(s => s.examId === examId) : subs;
+          callback(filtered);
+          return;
         }
-      });
-      if (subs.length > 0) {
-        saveLocalSubs(subs);
-        callback(subs);
-      } else {
-        const local = getLocalSubs();
-        const filtered = examId ? local.filter(s => s.examId === examId) : local;
-        callback(filtered);
       }
-    }, (error) => {
-      console.warn("Submissions listener fallback:", error);
+    } catch (err) {
+      console.warn("[subscribeSubmissions] API notice:", err);
+    }
+    if (active) {
       const local = getLocalSubs();
       const filtered = examId ? local.filter(s => s.examId === examId) : local;
       callback(filtered);
-    });
-  } catch (e) {
-    const local = getLocalSubs();
-    const filtered = examId ? local.filter(s => s.examId === examId) : local;
-    callback(filtered);
-    return () => {};
-  }
+    }
+  };
+
+  fetchSubs();
+  const interval = setInterval(fetchSubs, 4000);
+  return () => {
+    active = false;
+    clearInterval(interval);
+  };
 }
 
 // Toggle Exam Status: ACTIVE <-> CLOSED
 export async function toggleExamStatusInDb(examId: string, currentStatus: 'ACTIVE' | 'CLOSED'): Promise<string> {
   const newStatus = currentStatus === 'ACTIVE' ? 'CLOSED' : 'ACTIVE';
   try {
-    const docRef = doc(db, 'exams', examId);
-    await updateDoc(docRef, { status: newStatus });
+    await fetch(`/api/exams/${examId}/toggle-status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus })
+    });
   } catch (e) {
-    // Local update
-    const exams = getLocalExams();
-    const ex = exams.find(x => x.id === examId);
-    if (ex) {
-      ex.status = newStatus;
-      saveLocalExams(exams);
-    }
+    console.warn("[toggleExamStatusInDb] API notice:", e);
+  }
+
+  // Local update
+  const exams = getLocalExams();
+  const ex = exams.find(x => x.id === examId);
+  if (ex) {
+    ex.status = newStatus;
+    saveLocalExams(exams);
   }
   return newStatus;
 }
@@ -527,25 +438,30 @@ export async function toggleExamStatusInDb(examId: string, currentStatus: 'ACTIV
 export async function toggleScoreStatusInDb(examId: string, currentStatus: 'AUTO' | 'RELEASED'): Promise<string> {
   const newStatus = currentStatus === 'RELEASED' ? 'AUTO' : 'RELEASED';
   try {
-    const docRef = doc(db, 'exams', examId);
-    await updateDoc(docRef, { scoreStatus: newStatus });
+    await fetch(`/api/exams/${examId}/toggle-score-status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ scoreStatus: newStatus })
+    });
   } catch (e) {
-    const exams = getLocalExams();
-    const ex = exams.find(x => x.id === examId);
-    if (ex) {
-      ex.scoreStatus = newStatus;
-      saveLocalExams(exams);
-    }
+    console.warn("[toggleScoreStatusInDb] API notice:", e);
+  }
+
+  const exams = getLocalExams();
+  const ex = exams.find(x => x.id === examId);
+  if (ex) {
+    ex.scoreStatus = newStatus;
+    saveLocalExams(exams);
   }
   return newStatus;
 }
 
-// Save Exam Submission with atomic validation
+// Save Exam Submission with server-authoritative grading and anti-forgery
 export async function submitExamAttempt(
   examId: string,
   student: StudentUser,
   userAnswers: Record<string, number | "SKIPPED">,
-  questions: QuestionItem[],
+  questions: (QuestionItem | StudentQuestion)[],
   secsConsumed: number,
   proctorMeta?: {
     tabSwitchCount?: number;
@@ -553,181 +469,157 @@ export async function submitExamAttempt(
     proctorStatus?: 'CLEAN' | 'WARNED' | 'FLAGGED_VIOLATION';
   }
 ): Promise<SubmissionDocument> {
-  // Check if student already submitted this exam
-  const existingSubs = getLocalSubs();
-  const alreadySubmitted = existingSubs.find(
-    s => s.examId === examId && s.admnNo.trim().toLowerCase() === student.admnNo.trim().toLowerCase()
-  );
-  if (alreadySubmitted) {
-    throw new Error("SECURITY BLOCK: You have already submitted this examination.");
-  }
-
-  // Calculate grading, points, and category breakdown
-  let correct = 0;
-  let wrong = 0;
-  let skipped = 0;
-  let earnedPoints = 0;
-  let totalPointsPossible = 0;
-  const catStats: Record<string, { c: number; t: number }> = {};
-  const detailedAnswers: Record<string, string | number> = {};
-
-  questions.forEach(q => {
-    const cat = q.category ? q.category.toUpperCase().trim() : "GENERAL";
-    const qPoints = typeof q.points === 'number' && !isNaN(q.points) ? q.points : 1;
-    totalPointsPossible += qPoints;
-
-    if (!catStats[cat]) catStats[cat] = { c: 0, t: 0 };
-    catStats[cat].t++;
-
-    const chosen = userAnswers[q.id];
-    if (chosen === "SKIPPED" || chosen === null || chosen === undefined) {
-      skipped++;
-      detailedAnswers[q.id] = "SKIPPED";
-    } else {
-      const chosenNum = Number(chosen);
-      detailedAnswers[q.id] = q.options.find(o => o.o === chosenNum)?.t || chosenNum;
-      if (chosenNum === q.correctAnswer) {
-        correct++;
-        earnedPoints += qPoints;
-        catStats[cat].c++;
-      } else {
-        wrong++;
-      }
-    }
-  });
-
-  const breakdownParts: string[] = [];
-  for (const c in catStats) {
-    if (catStats[c].t > 0) {
-      let shortName = c.includes("PHYSICAL") ? "PHY" : (c.includes("BIOLOGICAL") ? "BIO" : c.slice(0, 4));
-      breakdownParts.push(`${shortName}: ${catStats[c].c}/${catStats[c].t}`);
-    }
-  }
-  const categoryBreakdown = breakdownParts.length > 0 ? breakdownParts.join(" | ") : "-";
-
-  // Check if exam defines a custom totalMarks
-  const exams = getLocalExams();
-  const exam = exams.find(x => x.id === examId);
-  const maxMarks = exam?.totalMarks || totalPointsPossible || questions.length;
-  const score = `${earnedPoints} out of ${maxMarks}`;
-  const m = Math.floor(secsConsumed / 60);
-  const s = secsConsumed % 60;
-  const timeUsed = `${m}m ${s}s`;
-
-  const newSubmission: SubmissionDocument = {
-    examId,
-    admnNo: student.admnNo,
-    name: student.name,
-    classSec: student.classSec,
-    score,
-    earnedPoints,
-    totalMarks: maxMarks,
-    correct,
-    wrong,
-    skipped,
-    timeUsed,
-    secsConsumed,
-    categoryBreakdown,
-    detailedAnswers,
-    submittedAt: new Date().toISOString(),
-    tabSwitchCount: proctorMeta?.tabSwitchCount ?? 0,
-    proctorViolations: proctorMeta?.proctorViolations ?? [],
-    proctorStatus: proctorMeta?.proctorStatus ?? ((proctorMeta?.tabSwitchCount ?? 0) >= 3 ? 'FLAGGED_VIOLATION' : (proctorMeta?.tabSwitchCount ?? 0) > 0 ? 'WARNED' : 'CLEAN')
-  };
-
+  // 1. Call server-authoritative submission endpoint
   try {
-    const docRef = await addDoc(collection(db, 'submissions'), {
-      ...newSubmission,
-      submittedAt: serverTimestamp()
+    const res = await fetch('/api/exams/submit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        examId,
+        answers: userAnswers,
+        secsConsumed,
+        tabSwitchCount: proctorMeta?.tabSwitchCount ?? 0,
+        proctorViolations: proctorMeta?.proctorViolations ?? [],
+        proctorStatus: proctorMeta?.proctorStatus ?? 'CLEAN'
+      })
     });
-    newSubmission.id = docRef.id;
-  } catch (err) {
-    console.warn("Firestore write fallback to local cache:", err);
-    newSubmission.id = `sub-local-${Date.now()}`;
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Server rejected examination submission.');
+    }
+
+    const verifiedSubmission: SubmissionDocument = {
+      id: data.submissionId,
+      examId,
+      admnNo: student.admnNo,
+      name: student.name,
+      classSec: student.classSec,
+      score: data.score,
+      earnedPoints: data.earnedPoints,
+      totalMarks: data.totalMarks,
+      correct: data.correct,
+      wrong: data.wrong,
+      skipped: data.skipped,
+      timeUsed: data.timeUsed || `${Math.floor(secsConsumed / 60)}m ${secsConsumed % 60}s`,
+      secsConsumed,
+      categoryBreakdown: data.categoryBreakdown || '-',
+      detailedAnswers: userAnswers,
+      submittedAt: data.submittedAt || new Date().toISOString(),
+      tabSwitchCount: proctorMeta?.tabSwitchCount ?? 0,
+      proctorViolations: proctorMeta?.proctorViolations ?? [],
+      proctorStatus: proctorMeta?.proctorStatus ?? 'CLEAN'
+    };
+
+    // Update local cache for immediate UI responsiveness
+    const existingSubs = getLocalSubs();
+    const filtered = existingSubs.filter(s => !(s.examId === examId && s.admnNo === student.admnNo));
+    saveLocalSubs([verifiedSubmission, ...filtered]);
+
+    return verifiedSubmission;
+  } catch (err: any) {
+    // If server returned a business error (e.g. duplicate or closed), rethrow directly
+    if (err.message && (err.message.includes('Duplicate') || err.message.includes('closed') || err.message.includes('rejected'))) {
+      throw err;
+    }
+
+    console.warn("[submitExamAttempt] Server endpoint notice, applying fallback:", err);
+
+    // Offline / direct fallback with security note
+    const existingSubs = getLocalSubs();
+    const alreadySubmitted = existingSubs.find(
+      s => s.examId === examId && s.admnNo.trim().toLowerCase() === student.admnNo.trim().toLowerCase()
+    );
+    if (alreadySubmitted) {
+      throw new Error("SECURITY BLOCK: You have already submitted this examination.");
+    }
+
+    const fallbackSubmission: SubmissionDocument = {
+      examId,
+      admnNo: student.admnNo,
+      name: student.name,
+      classSec: student.classSec,
+      score: `Submitted (Pending Audit)`,
+      correct: 0,
+      wrong: 0,
+      skipped: 0,
+      timeUsed: `${Math.floor(secsConsumed / 60)}m ${secsConsumed % 60}s`,
+      secsConsumed,
+      categoryBreakdown: "-",
+      detailedAnswers: userAnswers,
+      submittedAt: new Date().toISOString(),
+      tabSwitchCount: proctorMeta?.tabSwitchCount ?? 0,
+      proctorViolations: proctorMeta?.proctorViolations ?? [],
+      proctorStatus: proctorMeta?.proctorStatus ?? 'CLEAN'
+    };
+
+    try {
+      const docRef = await addDoc(collection(db, 'submissions'), {
+        ...fallbackSubmission,
+        submittedAt: serverTimestamp()
+      });
+      fallbackSubmission.id = docRef.id;
+    } catch (e) {
+      fallbackSubmission.id = `sub-local-${Date.now()}`;
+    }
+
+    saveLocalSubs([fallbackSubmission, ...existingSubs]);
+    return fallbackSubmission;
   }
-
-  // Update local cache
-  const updated = [newSubmission, ...existingSubs];
-  saveLocalSubs(updated);
-
-  return newSubmission;
 }
 
-// Subscribe to School Roster (Students & Teachers) from Firestore
+// Subscribe to School Roster (Students & Teachers) via authenticated Express API
 export function subscribeSchoolRoster(
   callback: (data: { students: StudentRecord[]; teachers: TeacherRecord[] }) => void
 ) {
-  try {
-    const q = collection(db, 'roster');
-    return onSnapshot(q, (snapshot) => {
-      if (!snapshot.empty) {
-        const students: StudentRecord[] = [];
-        const teachers: TeacherRecord[] = [];
-        snapshot.forEach((d) => {
-          const data = d.data();
-          if (data.type === 'STUDENT' || data.examNo) {
-            students.push({
-              id: d.id,
-              examNo: data.examNo,
-              dob: data.dob,
-              name: data.name,
-              classSec: data.classSec,
-              admnNo: data.admnNo
-            });
-          } else if (data.type === 'TEACHER' || data.email) {
-            teachers.push({
-              id: d.id,
-              email: data.email,
-              pass: data.pass,
-              name: data.name,
-              assigned: data.assigned || []
-            });
-          }
-        });
+  let active = true;
+  const fetchRoster = async () => {
+    try {
+      const [stRes, tcRes] = await Promise.all([
+        fetch('/api/roster/students'),
+        fetch('/api/roster/teachers')
+      ]);
 
-        // Merge defaults if not present
-        const mergedStudents = [...students];
-        DEFAULT_STUDENTS.forEach(defSt => {
-          if (!mergedStudents.some(s => s.examNo.toLowerCase() === defSt.examNo.toLowerCase())) {
-            mergedStudents.push(defSt);
-          }
-        });
+      const students = stRes.ok ? (await stRes.json()).students || [] : [];
+      const teachers = tcRes.ok ? (await tcRes.json()).teachers || [] : [];
 
-        const mergedTeachers = [...teachers];
-        DEFAULT_TEACHERS.forEach(defTc => {
-          if (!mergedTeachers.some(t => t.email.toLowerCase() === defTc.email.toLowerCase())) {
-            mergedTeachers.push(defTc);
-          }
-        });
-
-        saveLocalStudents(mergedStudents);
-        saveLocalTeachers(mergedTeachers);
-        callback({ students: mergedStudents, teachers: mergedTeachers });
-      } else {
-        const st = getLocalStudents();
-        const tc = getLocalTeachers();
-        callback({ students: st, teachers: tc });
+      if (active) {
+        saveLocalStudents(students);
+        saveLocalTeachers(teachers);
+        callback({ students, teachers });
       }
-    }, (err) => {
-      console.warn("Roster listener fallback to cache:", err);
-      callback({ students: getLocalStudents(), teachers: getLocalTeachers() });
-    });
-  } catch (e) {
-    callback({ students: getLocalStudents(), teachers: getLocalTeachers() });
-    return () => {};
-  }
+    } catch (err) {
+      if (active) {
+        callback({ students: getLocalStudents(), teachers: getLocalTeachers() });
+      }
+    }
+  };
+
+  fetchRoster();
+  const interval = setInterval(fetchRoster, 10000);
+  return () => {
+    active = false;
+    clearInterval(interval);
+  };
 }
 
-// Add or update an exam in Firestore & local cache
+// Add or update an exam in server DB
 export async function saveExamToFirestore(exam: ExamDocument): Promise<void> {
   try {
-    const docRef = await addDoc(collection(db, 'exams'), {
-      ...exam,
-      createdAt: serverTimestamp()
+    const res = await fetch('/api/exams', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(exam)
     });
-    exam.id = docRef.id;
+    if (res.ok) {
+      const data = await res.json();
+      if (data.exam?.id) exam.id = data.exam.id;
+    }
   } catch (err) {
-    console.warn("Firestore exam creation fallback to local:", err);
+    console.warn("[saveExamToFirestore] API notice:", err);
   }
 
   // Update local cache ensuring no duplicate IDs or codes
@@ -736,8 +628,18 @@ export async function saveExamToFirestore(exam: ExamDocument): Promise<void> {
   saveLocalExams([exam, ...filtered]);
 }
 
-// Add single student to roster
+// Add single student to roster via server API
 export async function addStudentRecord(student: StudentRecord): Promise<void> {
+  try {
+    await fetch('/api/roster/students', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(student)
+    });
+  } catch (err) {
+    console.warn("[addStudentRecord] API notice:", err);
+  }
+
   const current = getLocalStudents();
   const existingIndex = current.findIndex(
     s => s.examNo.toLowerCase() === student.examNo.toLowerCase()
@@ -751,53 +653,49 @@ export async function addStudentRecord(student: StudentRecord): Promise<void> {
     updated = [student, ...current];
   }
   saveLocalStudents(updated);
-
-  try {
-    await addDoc(collection(db, 'roster'), {
-      ...student,
-      type: 'STUDENT',
-      createdAt: serverTimestamp()
-    });
-  } catch (err) {
-    console.warn("Firestore roster write fallback:", err);
-  }
 }
 
 // Bulk add students to roster (from CSV / Google Sheet)
 export async function bulkAddStudents(students: StudentRecord[]): Promise<number> {
+  let addedCount = 0;
+  for (const st of students) {
+    if (st.examNo && st.name) {
+      try {
+        await fetch('/api/roster/students', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(st)
+        });
+        addedCount++;
+      } catch (e) {}
+    }
+  }
+
   const current = getLocalStudents();
   const map = new Map<string, StudentRecord>();
   current.forEach(s => map.set(s.examNo.toLowerCase(), s));
-  
-  let addedCount = 0;
   students.forEach(s => {
     if (s.examNo && s.name) {
       map.set(s.examNo.toLowerCase(), s);
-      addedCount++;
     }
   });
 
-  const updated = Array.from(map.values());
-  saveLocalStudents(updated);
-
-  // Firestore background sync
-  try {
-    for (const st of students) {
-      if (st.examNo && st.name) {
-        addDoc(collection(db, 'roster'), {
-          ...st,
-          type: 'STUDENT',
-          createdAt: serverTimestamp()
-        }).catch(() => {});
-      }
-    }
-  } catch (e) {}
-
+  saveLocalStudents(Array.from(map.values()));
   return addedCount;
 }
 
-// Update student in roster
+// Update student in roster via server API
 export async function updateStudentRecord(oldExamNo: string, updatedStudent: StudentRecord): Promise<void> {
+  try {
+    await fetch('/api/roster/students', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedStudent)
+    });
+  } catch (err) {
+    console.warn("[updateStudentRecord] API notice:", err);
+  }
+
   const current = getLocalStudents();
   const index = current.findIndex(s => s.examNo.toLowerCase() === oldExamNo.toLowerCase());
   let updatedList: StudentRecord[];
@@ -808,43 +706,21 @@ export async function updateStudentRecord(oldExamNo: string, updatedStudent: Stu
     updatedList = [updatedStudent, ...current];
   }
   saveLocalStudents(updatedList);
-
-  // Firestore background sync
-  try {
-    const q = query(collection(db, 'roster'), where('type', '==', 'STUDENT'), where('examNo', '==', oldExamNo));
-    const snap = await getDocs(q);
-    if (!snap.empty) {
-      for (const d of snap.docs) {
-        await updateDoc(doc(db, 'roster', d.id), {
-          ...updatedStudent,
-          updatedAt: serverTimestamp()
-        });
-      }
-    } else {
-      await addDoc(collection(db, 'roster'), {
-        ...updatedStudent,
-        type: 'STUDENT',
-        createdAt: serverTimestamp()
-      });
-    }
-  } catch (err) {
-    console.warn("Firestore updateStudentRecord fallback:", err);
-  }
 }
 
-// Delete student from roster
+// Delete student from roster via server API
 export async function deleteStudentRecord(examNo: string): Promise<void> {
+  try {
+    await fetch(`/api/roster/students/${encodeURIComponent(examNo)}`, {
+      method: 'DELETE'
+    });
+  } catch (e) {
+    console.warn("[deleteStudentRecord] API notice:", e);
+  }
+
   const current = getLocalStudents();
   const updated = current.filter(s => s.examNo.toLowerCase() !== examNo.toLowerCase());
   saveLocalStudents(updated);
-
-  try {
-    const q = query(collection(db, 'roster'), where('type', '==', 'STUDENT'), where('examNo', '==', examNo));
-    const snap = await getDocs(q);
-    snap.forEach(d => {
-      deleteDoc(doc(db, 'roster', d.id)).catch(() => {});
-    });
-  } catch (e) {}
 }
 
 // Add single teacher to roster
@@ -862,16 +738,6 @@ export async function addTeacherRecord(teacher: TeacherRecord): Promise<void> {
     updated = [teacher, ...current];
   }
   saveLocalTeachers(updated);
-
-  try {
-    await addDoc(collection(db, 'roster'), {
-      ...teacher,
-      type: 'TEACHER',
-      createdAt: serverTimestamp()
-    });
-  } catch (err) {
-    console.warn("Firestore roster write fallback:", err);
-  }
 }
 
 // Update teacher in roster
@@ -886,28 +752,6 @@ export async function updateTeacherRecord(oldEmail: string, updatedTeacher: Teac
     updatedList = [updatedTeacher, ...current];
   }
   saveLocalTeachers(updatedList);
-
-  // Firestore background sync
-  try {
-    const q = query(collection(db, 'roster'), where('type', '==', 'TEACHER'), where('email', '==', oldEmail.toLowerCase()));
-    const snap = await getDocs(q);
-    if (!snap.empty) {
-      for (const d of snap.docs) {
-        await updateDoc(doc(db, 'roster', d.id), {
-          ...updatedTeacher,
-          updatedAt: serverTimestamp()
-        });
-      }
-    } else {
-      await addDoc(collection(db, 'roster'), {
-        ...updatedTeacher,
-        type: 'TEACHER',
-        createdAt: serverTimestamp()
-      });
-    }
-  } catch (err) {
-    console.warn("Firestore updateTeacherRecord fallback:", err);
-  }
 }
 
 // Bulk add teachers to roster
@@ -957,157 +801,71 @@ export async function deleteTeacherRecord(email: string): Promise<void> {
   } catch (e) {}
 }
 
-// Authentication Service
-export function authenticateUser(role: 'STUDENT' | 'TEACHER' | 'ADMIN', userId: string, pass: string): AuthUser {
-  const cleanId = userId.trim().toLowerCase();
+// Authentication Service (Student Exam No + DOB, Teacher, Admin)
+export async function authenticateUser(role: 'STUDENT' | 'TEACHER' | 'ADMIN', userId: string, pass: string): Promise<AuthUser> {
+  const cleanId = userId.trim();
   const cleanPass = pass.trim();
 
   if (role === 'STUDENT') {
-    const students = getLocalStudents();
-    const student = students.find(
-      s => s.examNo.toLowerCase() === cleanId && s.dob.trim() === cleanPass
-    );
-    if (!student) {
-      throw new Error("Invalid Exam Number or Password (DD/MM/YYYY). Please check your credentials or contact the school office.");
+    // Call server-authoritative student login endpoint
+    const res = await fetch('/api/auth/student-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ examNo: cleanId, dob: cleanPass })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Student authentication failed.');
     }
-    return {
-      role: 'STUDENT',
-      admnNo: student.admnNo,
-      name: student.name,
-      classSec: student.classSec,
-      examNo: student.examNo
-    };
-  } else if (role === 'TEACHER') {
-    const teachers = getLocalTeachers();
-    let teacher = teachers.find(
-      t => t.email.toLowerCase() === cleanId && t.pass === cleanPass
-    );
-
-    // Support SPIC School domain logins (e.g. maharajan@spicschool.com or any @spicschool.com email)
-    if (!teacher && cleanId.endsWith('@spicschool.com')) {
-      if (cleanPass === 'Teacher@2026' || cleanPass === 'SpicAdmin@2026') {
-        const staffName = cleanId.split('@')[0].replace('.', ' ').toUpperCase();
-        teacher = {
-          email: cleanId,
-          pass: cleanPass,
-          name: cleanId.startsWith('maharajan') ? 'Mr. Maharajan (Senior Faculty)' : `Staff (${staffName})`,
-          assigned: ['10 A', '10 B', '11 A', '12 A']
-        };
-        // Auto-persist into teachers roster
-        addTeacherRecord(teacher).catch(() => {});
-      }
-    }
-
-    if (!teacher) {
-      throw new Error("Invalid Teacher Email or Password. School domain teachers may use their @spicschool.com email with standard staff password.");
-    }
-    return {
-      role: 'TEACHER',
-      email: teacher.email,
-      name: teacher.name,
-      assignedClasses: teacher.assigned
-    };
+    return data.user as StudentUser;
   } else {
-    // ADMIN
-    if (
-      (cleanId === DEFAULT_ADMIN.adminId || 
-       cleanId === DEFAULT_ADMIN.email || 
-       cleanId === 'maharajan@spicschool.com' ||
-       cleanId === 'maharajan') &&
-      (cleanPass === DEFAULT_ADMIN.pass || cleanPass === 'SpicAdmin@2026')
-    ) {
-      return {
-        role: 'ADMIN',
-        adminId: DEFAULT_ADMIN.adminId,
-        name: cleanId.includes('maharajan') ? 'Mr. Maharajan (Administrator)' : DEFAULT_ADMIN.name
-      };
+    // Staff login: Teacher or Admin via server-authoritative endpoint
+    const res = await fetch('/api/auth/staff-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role, identifier: cleanId, password: cleanPass })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Staff authentication failed. Invalid credentials.');
     }
-    throw new Error("Invalid Master Administrator Credentials.");
+    return data.user as AuthUser;
   }
 }
 
 // Google SSO Authenticator by Email
-export function authenticateByEmail(
+export async function authenticateByEmail(
   email: string, 
   displayName?: string, 
   preferredRole?: UserRole
-): AuthUser {
+): Promise<AuthUser> {
   const cleanEmail = email.trim().toLowerCase();
 
-  // 1. If user requested Admin or has Admin email
-  if (
-    preferredRole === 'ADMIN' || 
-    cleanEmail === DEFAULT_ADMIN.email || 
-    cleanEmail === 'admin@spicschool.com'
-  ) {
-    return {
-      role: 'ADMIN',
-      adminId: DEFAULT_ADMIN.adminId,
-      name: displayName || (cleanEmail.includes('maharajan') ? 'Mr. Maharajan (Administrator)' : DEFAULT_ADMIN.name)
-    };
+  // Call server-authoritative Google SSO endpoint
+  try {
+    const res = await fetch('/api/auth/google-sso', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: cleanEmail,
+        displayName,
+        requestedTab: preferredRole
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Server rejected Google SSO authentication.');
+    }
+
+    return data.user as AuthUser;
+  } catch (err: any) {
+    if (err.message && err.message.includes('Access Denied')) {
+      throw err;
+    }
+    console.warn("[authenticateByEmail] Server endpoint notice:", err);
+    throw err;
   }
-
-  // 2. Check Teacher Roster
-  const teachers = getLocalTeachers();
-  const matchedTeacher = teachers.find(t => t.email.toLowerCase() === cleanEmail);
-  if (matchedTeacher) {
-    return {
-      role: 'TEACHER',
-      email: matchedTeacher.email,
-      name: matchedTeacher.name || displayName || 'Faculty Member',
-      assignedClasses: matchedTeacher.assigned
-    };
-  }
-
-  // 3. SPIC School Google Workspace Domain (@spicschool.com)
-  if (cleanEmail.endsWith('@spicschool.com')) {
-    // Auto-create faculty member in roster
-    const staffName = displayName || cleanEmail.split('@')[0].replace('.', ' ').toUpperCase();
-    const newFaculty: TeacherRecord = {
-      email: cleanEmail,
-      pass: 'Teacher@2026',
-      name: cleanEmail.startsWith('maharajan') ? 'Mr. Maharajan (Senior Faculty)' : `Faculty (${staffName})`,
-      assigned: ['10 A', '10 B', '11 A', '12 A']
-    };
-    addTeacherRecord(newFaculty).catch(() => {});
-
-    return {
-      role: 'TEACHER',
-      email: newFaculty.email,
-      name: newFaculty.name,
-      assignedClasses: newFaculty.assigned
-    };
-  }
-
-  // 4. Check Student Roster
-  const students = getLocalStudents();
-  const matchedStudent = students.find(s => 
-    cleanEmail.includes(s.examNo.toLowerCase()) || 
-    cleanEmail.includes(s.admnNo.toLowerCase().replace(/[^a-z0-9]/g, '')) ||
-    (s.name && cleanEmail.split('@')[0].replace(/[^a-z]/g, '').includes(s.name.toLowerCase().replace(/[^a-z]/g, '')))
-  );
-
-  if (matchedStudent) {
-    return {
-      role: 'STUDENT',
-      admnNo: matchedStudent.admnNo,
-      name: matchedStudent.name,
-      classSec: matchedStudent.classSec,
-      examNo: matchedStudent.examNo
-    };
-  }
-
-  // If user selected student role specifically
-  if (preferredRole === 'STUDENT') {
-    throw new Error(`The Google Account (${cleanEmail}) is not linked to any student Exam Number in the roster. Please log in using your Exam Number and DOB, or ask your administrator to register your account.`);
-  }
-
-  // If user selected teacher role specifically
-  if (preferredRole === 'TEACHER') {
-    throw new Error(`The Google Account (${cleanEmail}) is not found in the SPIC School faculty roster. Please use your official @spicschool.com school email or contact the school office.`);
-  }
-
-  throw new Error(`Google Account (${cleanEmail}) is not registered in SPIC School records. Please use your school domain account (@spicschool.com).`);
 }
 
 // Google Sign In via Firebase Auth Popup
@@ -1120,5 +878,5 @@ export async function signInWithGoogleSSO(preferredRole?: UserRole): Promise<Aut
   const email = (user.email || '').trim();
   const displayName = user.displayName || email.split('@')[0];
 
-  return authenticateByEmail(email, displayName, preferredRole);
+  return await authenticateByEmail(email, displayName, preferredRole);
 }

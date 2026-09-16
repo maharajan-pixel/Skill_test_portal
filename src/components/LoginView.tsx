@@ -29,7 +29,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
     try {
       // Authenticate against our secure service
-      const user = authenticateUser(role, userId, password);
+      const user = await authenticateUser(role, userId, password);
       onLoginSuccess(user);
     } catch (err: any) {
       setErrorMessage(err.message || 'Authentication failed. Please verify credentials.');
@@ -62,7 +62,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         );
         if (promptEmail && promptEmail.trim()) {
           try {
-            const authUser = authenticateByEmail(promptEmail.trim(), undefined, role);
+            const authUser = await authenticateByEmail(promptEmail.trim(), undefined, role);
             onLoginSuccess(authUser);
             return;
           } catch (fallbackErr: any) {
@@ -105,7 +105,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
           </button>
           <button
             type="button"
-            onClick={() => handleQuickFill('TEACHER', 'maharajan@spicschool.com', 'Teacher@2026')}
+            onClick={() => handleQuickFill('TEACHER', 'maharajan@spicschool.com', '')}
             className="px-3 py-1.5 bg-white hover:bg-indigo-100/60 border border-indigo-200 rounded-xl font-bold text-slate-800 transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
           >
             <span className="w-2 h-2 rounded-full bg-purple-600"></span>
@@ -113,7 +113,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
           </button>
           <button
             type="button"
-            onClick={() => handleQuickFill('TEACHER', 'teacher.science@spicschool.com', 'Teacher@2026')}
+            onClick={() => handleQuickFill('TEACHER', 'teacher.science@spicschool.com', '')}
             className="px-3 py-1.5 bg-white hover:bg-indigo-100/60 border border-indigo-200 rounded-xl font-bold text-slate-800 transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
           >
             <span className="w-2 h-2 rounded-full bg-purple-600"></span>
@@ -121,7 +121,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
           </button>
           <button
             type="button"
-            onClick={() => handleQuickFill('ADMIN', 'admin', DEFAULT_ADMIN.pass)}
+            onClick={() => handleQuickFill('ADMIN', 'admin', '')}
             className="px-3 py-1.5 bg-white hover:bg-rose-100/60 border border-rose-200 rounded-xl font-bold text-slate-800 transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
           >
             <span className="w-2 h-2 rounded-full bg-rose-600"></span>

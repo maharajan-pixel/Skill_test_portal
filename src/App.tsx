@@ -10,7 +10,8 @@ import {
   TeacherUser, 
   AdminUser, 
   ExamDocument, 
-  SubmissionDocument 
+  SubmissionDocument,
+  QuestionItem
 } from './types';
 import { 
   subscribeExams, 
@@ -202,9 +203,28 @@ export default function App() {
     }, 800);
   };
 
-  // Start Exam (Student)
-  const handleStartExam = (examToStart: ExamDocument) => {
-    setActiveExam(examToStart);
+  // Start Exam (Student) - Initiate authoritative server session and sanitize payload
+  const handleStartExam = async (examToStart: ExamDocument) => {
+    try {
+      await fetch(`/api/exams/${examToStart.id}/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ examId: examToStart.id })
+      });
+    } catch (e) {
+      console.warn("Server timer sync warning:", e);
+    }
+
+    // Strip answer keys from candidate view so answers never exist in state or storage
+    const sanitizedExam: ExamDocument = {
+      ...examToStart,
+      questions: examToStart.questions.map(q => {
+        const { correctAnswer, ...safeQ } = q as any;
+        return safeQ as QuestionItem;
+      })
+    };
+
+    setActiveExam(sanitizedExam);
     setCurrentView('EXAM_KIOSK');
   };
 
@@ -323,16 +343,16 @@ export default function App() {
       `"${(s.proctorViolations || []).join('; ').replace(/"/g, '""')}"`
     ]);
 
-    const csvContent = "data:text/csv;charset=utf-8," + 
-      [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-
-    const encodedUri = encodeURI(csvContent);
+    const csvContent = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.setAttribute("href", url);
     link.setAttribute("download", `SPIC_School_Master_Scoreboard_${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (

@@ -11,7 +11,7 @@ export interface StudentRecord {
 
 export interface TeacherRecord {
   email: string;
-  pass: string;
+  pass?: string;
   name: string;
   assigned: string[];
   id?: string;
@@ -50,8 +50,29 @@ export interface QuestionItem {
   category: string; // e.g. "PHYSICAL SCIENCE", "BIOLOGICAL SCIENCE"
   text: string;
   options: QuestionOption[];
-  correctAnswer: number; // 0, 1, 2, 3
+  correctAnswer?: number; // 0, 1, 2, 3 (omitted in student sessions and client bundles)
   points?: number; // default 1
+}
+
+/**
+ * Sanitized question payload for students.
+ * Crucially omits correctAnswer to ensure answers are never exposed to the client.
+ */
+export interface StudentQuestion {
+  id: string;
+  category: string;
+  text: string;
+  options: QuestionOption[];
+  points?: number;
+}
+
+export interface AuthoritativeAnswerKey {
+  examId: string;
+  answerKey: Record<string, number>; // questionId -> correct option index
+  points: Record<string, number>;    // questionId -> point value
+  categories?: Record<string, string>; // questionId -> category
+  totalMarks: number;
+  updatedAt?: any;
 }
 
 export interface ExamDocument {
@@ -69,6 +90,20 @@ export interface ExamDocument {
   targetUrl: string;
   questions: QuestionItem[];
   createdAt?: any;
+}
+
+export interface StudentExamDocument {
+  id: string;
+  code?: string;
+  title: string;
+  subject: string;
+  classSec: string;
+  status: 'ACTIVE' | 'CLOSED';
+  scoreStatus: 'AUTO' | 'RELEASED';
+  examMins: number;
+  qCount: number;
+  totalMarks?: number;
+  questions: StudentQuestion[];
 }
 
 export interface SubmissionDocument {
@@ -107,7 +142,7 @@ export interface ActiveStudentExamCard {
   status: 'ACTIVE' | 'CLOSED';
 }
 
-export interface KioskQuestionState extends QuestionItem {
+export interface KioskQuestionState extends StudentQuestion {
   selectedOpt: number | null;
   isAnsweredOnce: boolean;
   editsLeft: number;

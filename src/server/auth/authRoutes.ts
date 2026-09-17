@@ -79,8 +79,7 @@ authRouter.post('/student-login', async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      user: studentUser,
-      token
+      user: studentUser
     });
   } catch (err: any) {
     console.error('[authRoutes] Error in student-login:', err);
@@ -127,8 +126,7 @@ authRouter.post('/staff-login', async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      user: authUser,
-      token
+      user: authUser
     });
   } catch (err: any) {
     console.error('[authRoutes] Error in staff-login:', err);
@@ -232,8 +230,7 @@ authRouter.post('/google-sso', async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      user: authUser,
-      token
+      user: authUser
     });
   } catch (err: any) {
     console.error('[authRoutes] Error in google-sso:', err);

@@ -2,7 +2,20 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { AuthUser } from '../../types';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'spic-school-cbt-secure-jwt-signing-secret-2026';
+function resolveJwtSecret(): string {
+  if (process.env.NODE_ENV === 'production') {
+    if (!process.env.JWT_SECRET || process.env.JWT_SECRET.trim().length === 0) {
+      throw new Error(
+        '[FATAL PRODUCTION CONFIGURATION ERROR] JWT_SECRET environment variable must be explicitly configured in production. Server startup is blocked to prevent insecure token signing.'
+      );
+    }
+    return process.env.JWT_SECRET.trim();
+  }
+  // In development, fallback to an isolated development-only secret
+  return process.env.JWT_SECRET?.trim() || 'spic-school-cbt-isolated-development-secret-not-for-prod-2026';
+}
+
+const JWT_SECRET = resolveJwtSecret();
 
 export interface AuthenticatedRequest extends Request {
   user?: AuthUser;
@@ -27,11 +40,16 @@ export function verifySessionToken(token: string): AuthUser | null {
 }
 
 /**
- * Middleware: extracts user from Cookie or Authorization header
+ * Middleware: extracts user strictly from HttpOnly Cookie (with dev-only testing fallback)
  */
 export function authenticateSession(req: AuthenticatedRequest, res: Response, next: NextFunction): void {
-  const token = req.cookies?.spic_session || 
-    (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.split(' ')[1] : null);
+  // Primary: Strictly read secure HttpOnly session cookie
+  let token = req.cookies?.spic_session;
+
+  // Development/Automated API test fallback: only if not in production and Authorization header is passed
+  if (!token && process.env.NODE_ENV !== 'production' && req.headers.authorization?.startsWith('Bearer ')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
 
   if (token) {
     const user = verifySessionToken(token);

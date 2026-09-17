@@ -9,6 +9,11 @@ import { rosterRouter } from './src/server/roster/rosterRoutes';
 import { authenticateSession } from './src/server/middleware/authMiddleware';
 
 async function startServer() {
+  // Validate production security invariants
+  if (process.env.NODE_ENV === 'production' && (!process.env.JWT_SECRET || !process.env.JWT_SECRET.trim())) {
+    throw new Error('[FATAL PRODUCTION SECURITY ERROR] JWT_SECRET must be explicitly configured in production. Aborting server startup.');
+  }
+
   const app = express();
   const PORT = 3000;
 

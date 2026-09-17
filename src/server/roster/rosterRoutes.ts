@@ -4,16 +4,7 @@ import {
   getStudentByExamNo,
   getTeacherByEmail 
 } from '../firebaseAdmin';
-import { 
-  collection, 
-  getDocs, 
-  doc, 
-  setDoc, 
-  deleteDoc, 
-  query, 
-  where,
-  serverTimestamp 
-} from 'firebase/firestore';
+import { FieldValue } from 'firebase-admin/firestore';
 import { 
   AuthenticatedRequest, 
   requireTeacherOrAdmin, 
@@ -44,7 +35,7 @@ const fallbackTeachers: TeacherRecord[] = [
  */
 rosterRouter.get('/students', requireTeacherOrAdmin, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const snap = await getDocs(query(collection(serverDb, 'roster'), where('type', '==', 'STUDENT')));
+    const snap = await serverDb.collection('roster').where('type', '==', 'STUDENT').get();
     if (!snap.empty) {
       const students: StudentRecord[] = [];
       snap.forEach(d => {
@@ -80,10 +71,10 @@ rosterRouter.post('/students', requireTeacherOrAdmin, async (req: AuthenticatedR
     }
 
     const docId = `STUDENT_${student.examNo.trim().toUpperCase()}`;
-    await setDoc(doc(serverDb, 'roster', docId), {
+    await serverDb.collection('roster').doc(docId).set({
       ...student,
       type: 'STUDENT',
-      updatedAt: serverTimestamp()
+      updatedAt: FieldValue.serverTimestamp()
     }, { merge: true });
 
     res.json({ success: true, student });
@@ -100,7 +91,7 @@ rosterRouter.delete('/students/:examNo', requireTeacherOrAdmin, async (req: Auth
   try {
     const { examNo } = req.params;
     const docId = `STUDENT_${examNo.trim().toUpperCase()}`;
-    await deleteDoc(doc(serverDb, 'roster', docId));
+    await serverDb.collection('roster').doc(docId).delete();
     res.json({ success: true, examNo });
   } catch (err: any) {
     console.error('[rosterRoutes] Error deleting student:', err);
@@ -114,7 +105,7 @@ rosterRouter.delete('/students/:examNo', requireTeacherOrAdmin, async (req: Auth
  */
 rosterRouter.get('/teachers', requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const snap = await getDocs(query(collection(serverDb, 'roster'), where('type', '==', 'TEACHER')));
+    const snap = await serverDb.collection('roster').where('type', '==', 'TEACHER').get();
     if (!snap.empty) {
       const teachers: Omit<TeacherRecord, 'pass'>[] = [];
       snap.forEach(d => {

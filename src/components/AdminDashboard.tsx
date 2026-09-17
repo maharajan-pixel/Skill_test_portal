@@ -81,17 +81,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       
       {/* Master Control Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 pb-4 border-b border-slate-200">
-        <div>
-          <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest block">
-            Executive Control Tower
-          </span>
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">
-            Master Control Room
-          </h2>
-          <span className="text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 px-3 py-1 rounded-full mt-2 inline-flex items-center gap-1.5 shadow-2xs font-mono">
-            <ShieldCheck className="w-3.5 h-3.5 text-rose-600" />
-            <span>{user.name}</span>
-          </span>
+        <div className="flex items-center gap-3.5">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white p-1.5 border-2 border-amber-400 shadow-sm flex items-center justify-center shrink-0">
+            <img 
+              src="/school-logo.png" 
+              alt="SPIC Nagar School Crest" 
+              className="w-full h-full object-contain"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+          <div>
+            <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest block">
+              Executive Control Tower
+            </span>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">
+              Master Control Room
+            </h2>
+            <span className="text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 px-3 py-1 rounded-full mt-2 inline-flex items-center gap-1.5 shadow-2xs font-mono">
+              <ShieldCheck className="w-3.5 h-3.5 text-rose-600" />
+              <span>{user.name}</span>
+            </span>
+          </div>
         </div>
 
         {/* Global Action Bar */}

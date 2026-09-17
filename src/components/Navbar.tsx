@@ -37,20 +37,28 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex flex-col md:flex-row justify-between items-center gap-3">
           {/* School Brand */}
           <div className="text-center md:text-left flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-400 text-2xl font-black shadow-inner">
-              🎓
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white p-1.5 border-2 border-amber-400 shadow-md flex items-center justify-center shrink-0">
+              <img 
+                src="/school-logo.png" 
+                alt="SPIC Nagar Higher Secondary School Crest" 
+                className="w-full h-full object-contain"
+                referrerPolicy="no-referrer"
+              />
             </div>
             <div>
               <h1 className="text-lg sm:text-2xl font-black tracking-wider uppercase text-indigo-50 leading-none">
                 SPIC NAGAR HIGHER SECONDARY SCHOOL
               </h1>
-              <div className="flex items-center gap-2 mt-1 justify-center md:justify-start">
+              <div className="flex flex-wrap items-center gap-2 mt-1 justify-center md:justify-start">
                 <span className="text-[10px] sm:text-xs font-bold text-amber-400 tracking-widest uppercase">
                   Universal Digital Assessment Portal
                 </span>
+                <span className="text-[9px] font-bold text-amber-200/90 italic hidden sm:inline">
+                  • Towards a Better World
+                </span>
                 <span className="hidden sm:inline-flex items-center gap-1 text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-full font-mono font-bold">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  Real-Time Engine Active
+                  Live Portal
                 </span>
               </div>
             </div>

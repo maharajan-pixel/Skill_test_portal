@@ -97,17 +97,27 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
       
       {/* Student Profile Card */}
       <div className="bg-indigo-50 border border-indigo-200 p-5 rounded-3xl mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm">
-        <div>
-          <span className="text-[10px] sm:text-xs font-black text-indigo-400 uppercase tracking-widest block mb-0.5">
-            Logged in Candidate
-          </span>
-          <h2 className="text-xl sm:text-2xl font-black text-indigo-950 leading-tight">
-            {user.name}
-          </h2>
-          <div className="flex items-center gap-2 mt-1 text-xs text-indigo-700 font-mono font-bold">
-            <span>Admn No: {user.admnNo}</span>
-            <span>•</span>
-            <span>Exam No: {user.examNo}</span>
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-white p-1 border-2 border-amber-400 shadow-sm flex items-center justify-center shrink-0">
+            <img 
+              src="/school-logo.png" 
+              alt="SPIC Nagar School Crest" 
+              className="w-full h-full object-contain"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+          <div>
+            <span className="text-[10px] sm:text-xs font-black text-indigo-400 uppercase tracking-widest block mb-0.5">
+              Logged in Candidate
+            </span>
+            <h2 className="text-xl sm:text-2xl font-black text-indigo-950 leading-tight">
+              {user.name}
+            </h2>
+            <div className="flex items-center gap-2 mt-1 text-xs text-indigo-700 font-mono font-bold">
+              <span>Admn No: {user.admnNo}</span>
+              <span>•</span>
+              <span>Exam No: {user.examNo}</span>
+            </div>
           </div>
         </div>
 

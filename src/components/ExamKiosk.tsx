@@ -683,8 +683,13 @@ export const ExamKiosk: React.FC<ExamKioskProps> = ({
         
         {/* Left: Candidate & Paper details */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-indigo-600/30 border border-indigo-400/40 flex items-center justify-center text-lg">
-            🧑‍🎓
+          <div className="w-11 h-11 rounded-xl bg-white p-0.5 border border-amber-400 flex items-center justify-center shrink-0 shadow-xs">
+            <img 
+              src="/school-logo.png" 
+              alt="School Emblem" 
+              className="w-full h-full object-contain"
+              referrerPolicy="no-referrer"
+            />
           </div>
           <div>
             <div className="flex items-center gap-2">

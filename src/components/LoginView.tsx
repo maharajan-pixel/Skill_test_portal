@@ -79,6 +79,27 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   return (
     <div className="p-4 sm:p-8 max-w-4xl mx-auto min-h-[60vh] flex flex-col justify-center">
       <div className="max-w-xl mx-auto w-full">
+        {/* Official School Crest & Brand Banner */}
+        <div className="text-center mb-6">
+          <div className="w-28 h-28 sm:w-32 sm:h-32 mx-auto mb-3.5 bg-white p-2 rounded-3xl border-2 border-amber-400 shadow-md flex items-center justify-center">
+            <img 
+              src="/school-logo.png" 
+              alt="SPIC Nagar Higher Secondary School Emblem" 
+              className="w-full h-full object-contain"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+          <h2 className="text-xl sm:text-2xl font-black text-indigo-950 uppercase tracking-wide leading-tight">
+            SPIC NAGAR HR. SEC. SCHOOL
+          </h2>
+          <p className="text-xs sm:text-sm font-bold text-amber-600 mt-0.5 tracking-wider uppercase">
+            Towards a Better World
+          </p>
+          <p className="text-[11px] font-semibold text-slate-500 mt-1">
+            Universal Digital Assessment Portal
+          </p>
+        </div>
+
         {/* Domain email guidance note */}
         {role === 'TEACHER' && (
           <div className="mb-4 p-3 bg-indigo-50 border border-indigo-200 rounded-2xl text-[11px] text-indigo-950 font-bold flex items-center justify-between">

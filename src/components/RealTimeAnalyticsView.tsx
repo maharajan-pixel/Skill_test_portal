@@ -256,18 +256,30 @@ export const RealTimeAnalyticsView: React.FC<RealTimeAnalyticsViewProps> = ({
             <span>Return to Dashboard</span>
           </button>
           
-          <div className="flex items-center gap-2.5">
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900">
-              Real-Time Analysis: Class {exam.classSec} — {exam.subject}
-            </h2>
-            <span className="flex items-center gap-1 bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-0.5 rounded-full text-[10px] font-black font-mono">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-              LIVE DATA
-            </span>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-white p-1 border-2 border-amber-400 shadow-xs flex items-center justify-center shrink-0">
+              <img 
+                src="/school-logo.png" 
+                alt="SPIC Nagar School Crest" 
+                className="w-full h-full object-contain"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">
+                  Real-Time Analysis: Class {exam.classSec} — {exam.subject}
+                </h2>
+                <span className="flex items-center gap-1 bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-0.5 rounded-full text-[10px] font-black font-mono">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                  LIVE DATA
+                </span>
+              </div>
+              <p className="text-xs font-bold text-indigo-600 mt-0.5">
+                Paper: {exam.title}
+              </p>
+            </div>
           </div>
-          <p className="text-xs font-bold text-indigo-600 mt-0.5">
-            Paper: {exam.title}
-          </p>
         </div>
 
         {/* Action Controls */}

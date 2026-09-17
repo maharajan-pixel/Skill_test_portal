@@ -10,6 +10,11 @@ import {
   AdminUser,
   TeacherUser
 } from '../types';
+import { 
+  SCHOOL_ROSTER_STUDENTS, 
+  SCHOOL_ROSTER_TEACHERS, 
+  SCHOOL_EXAM_DOCUMENTS 
+} from '../data/schoolData';
 
 // Server-side Firebase Admin SDK initialization
 let adminApp: App;
@@ -70,36 +75,13 @@ export async function getServerExam(examId: string): Promise<ExamDocument | null
     console.warn(`[serverDb] Notice querying exam ${examId} from Firestore:`, err);
   }
 
-  // Fallback for default built-in examinations
-  if (examId === 'spic-sci-10a') {
-    return {
-      id: 'spic-sci-10a',
-      title: 'Class 10 A - General Science Assessment',
-      subject: 'Science (Physical & Biological)',
-      classSec: '10 A',
-      allowedTeachers: ['teacher.science@spicschool.com'],
-      status: 'ACTIVE',
-      scoreStatus: 'AUTO',
-      examMins: 10,
-      qCount: 10,
-      targetUrl: 'https://docs.google.com/spreadsheets/d/spic_science_db_10a/edit',
-      questions: [
-        {
-          id: 'Q101',
-          category: 'PHYSICAL SCIENCE',
-          text: 'What is the SI unit of electric potential difference (Voltage)?',
-          options: [{ t: 'Ampere (A)', o: 0 }, { t: 'Volt (V)', o: 1 }, { t: 'Ohm (Ω)', o: 2 }, { t: 'Joule (J)', o: 3 }],
-          points: 1
-        },
-        {
-          id: 'Q102',
-          category: 'PHYSICAL SCIENCE',
-          text: "According to Ohm's Law, when temperature remains constant, current is:",
-          options: [{ t: 'Inversely proportional to potential difference', o: 0 }, { t: 'Directly proportional to potential difference', o: 1 }, { t: 'Directly proportional to square of resistance', o: 2 }, { t: 'Independent of voltage', o: 3 }],
-          points: 1
-        }
-      ]
-    };
+  // Lookup in real school completed examinations
+  const cleanId = examId.trim().toLowerCase();
+  const matchedExam = SCHOOL_EXAM_DOCUMENTS.find(
+    e => e.id.toLowerCase() === cleanId || (e.code && e.code.toLowerCase() === cleanId)
+  );
+  if (matchedExam) {
+    return matchedExam;
   }
 
   return null;
@@ -231,23 +213,12 @@ export async function getStudentByExamNo(examNo: string): Promise<StudentRecord 
     console.warn(`[serverDb] Notice querying student by examNo:`, err);
   }
 
-  // Built-in sample student fallback for demo / test environments
-  if (cleanExamNo === 'EX1001') {
-    return {
-      examNo: 'EX1001',
-      dob: '15/08/2008',
-      name: 'S. Arun Kumar',
-      classSec: '10 A',
-      admnNo: 'SPIC-8801'
-    };
-  } else if (cleanExamNo === 'EX1002') {
-    return {
-      examNo: 'EX1002',
-      dob: '22/11/2009',
-      name: 'M. Kavitha',
-      classSec: '10 A',
-      admnNo: 'SPIC-8802'
-    };
+  // Lookup in real school student roster (698 enrolled students)
+  const matchedStudent = SCHOOL_ROSTER_STUDENTS.find(
+    s => s.examNo.trim().toUpperCase() === cleanExamNo || s.admnNo.trim().toUpperCase() === cleanExamNo
+  );
+  if (matchedStudent) {
+    return matchedStudent;
   }
 
   return null;
@@ -283,13 +254,21 @@ export async function getTeacherByEmail(email: string): Promise<TeacherRecord | 
     console.warn(`[serverDb] Notice querying teacher by email:`, err);
   }
 
-  // Default faculty fallback if not yet initialized in DB
+  // Lookup in real school faculty roster
+  const matchedTeacher = SCHOOL_ROSTER_TEACHERS.find(
+    t => t.email.trim().toLowerCase() === cleanEmail
+  );
+  if (matchedTeacher) {
+    return matchedTeacher;
+  }
+
+  // Master administrator fallback
   if (cleanEmail === 'maharajan@spicschool.com') {
     return {
       email: 'maharajan@spicschool.com',
       pass: 'Teacher@2026',
-      name: 'Mr. Maharajan (Faculty Member)',
-      assigned: ['10 A', '10 B', '11 A', '12 A']
+      name: 'Mr. Maharajan (Senior Faculty & Admin)',
+      assigned: ['VI A', 'VI B', 'VII A', 'VIII A', 'IX A', 'X A', 'XI A', 'XII A']
     };
   }
 
@@ -497,14 +476,20 @@ export async function getAllServerExams(): Promise<ExamDocument[]> {
           exams.push({ ...data, id: examId } as ExamDocument);
         }
       });
+      // Merge with school completed exams so all 51 completed tests are accessible
+      for (const ex of SCHOOL_EXAM_DOCUMENTS) {
+        if (!seen.has(ex.id)) {
+          seen.add(ex.id);
+          exams.push(ex);
+        }
+      }
       return exams;
     }
   } catch (err) {
     console.warn('[serverDb] Notice reading all exams from Firestore:', err);
   }
 
-  const defaultExam = await getServerExam('spic-sci-10a');
-  return defaultExam ? [defaultExam] : [];
+  return SCHOOL_EXAM_DOCUMENTS;
 }
 
 /**

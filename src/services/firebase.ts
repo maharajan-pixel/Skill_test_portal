@@ -33,6 +33,11 @@ import {
   TeacherRecord,
   UserRole
 } from '../types';
+import { 
+  SCHOOL_ROSTER_STUDENTS, 
+  SCHOOL_ROSTER_TEACHERS, 
+  SCHOOL_EXAM_DOCUMENTS 
+} from '../data/schoolData';
 
 // Initialize Firebase App
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
@@ -46,140 +51,9 @@ export const db = (firebaseConfig as any).firestoreDatabaseId
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
-// Default Questions for SPIC Science Examination
-// Sanitized Question list - Client never receives or bundles correctAnswer fields
-const SAMPLE_SCIENCE_QUESTIONS: QuestionItem[] = [
-  {
-    id: "Q101",
-    category: "PHYSICAL SCIENCE",
-    text: "What is the SI unit of electric potential difference (Voltage)?",
-    options: [
-      { t: "Ampere (A)", o: 0 },
-      { t: "Volt (V)", o: 1 },
-      { t: "Ohm (Ω)", o: 2 },
-      { t: "Joule (J)", o: 3 }
-    ],
-    points: 1
-  },
-  {
-    id: "Q102",
-    category: "PHYSICAL SCIENCE",
-    text: "According to Ohm's Law, when temperature remains constant, the current flowing through a conductor is:",
-    options: [
-      { t: "Inversely proportional to potential difference", o: 0 },
-      { t: "Directly proportional to potential difference", o: 1 },
-      { t: "Directly proportional to square of resistance", o: 2 },
-      { t: "Independent of applied voltage", o: 3 }
-    ],
-    points: 1
-  },
-  {
-    id: "Q103",
-    category: "PHYSICAL SCIENCE",
-    text: "Which mirror is primarily utilized as a rear-view mirror in automobiles for a wide field of view?",
-    options: [
-      { t: "Concave mirror", o: 0 },
-      { t: "Plane mirror", o: 1 },
-      { t: "Convex mirror", o: 2 },
-      { t: "Parabolic mirror", o: 3 }
-    ],
-    points: 1
-  },
-  {
-    id: "Q104",
-    category: "PHYSICAL SCIENCE",
-    text: "The split-ring commutator in an electric motor functions to:",
-    options: [
-      { t: "Reverse the direction of current in the coil every half rotation", o: 0 },
-      { t: "Increase the voltage supplied to the brushes", o: 1 },
-      { t: "Decrease friction in the axle bearings", o: 2 },
-      { t: "Convert alternating current into pulsating direct current", o: 3 }
-    ],
-    points: 1
-  },
-  {
-    id: "Q105",
-    category: "PHYSICAL SCIENCE",
-    text: "What is the refractive index of diamond approximately, giving it brilliant internal reflection?",
-    options: [
-      { t: "1.33", o: 0 },
-      { t: "1.52", o: 1 },
-      { t: "2.42", o: 2 },
-      { t: "1.00", o: 3 }
-    ],
-    points: 1
-  },
-  {
-    id: "Q106",
-    category: "BIOLOGICAL SCIENCE",
-    text: "In human circulatory physiology, which blood vessel carries oxygenated blood from lungs to the left atrium?",
-    options: [
-      { t: "Pulmonary artery", o: 0 },
-      { t: "Pulmonary vein", o: 1 },
-      { t: "Superior vena cava", o: 2 },
-      { t: "Systemic aorta", o: 3 }
-    ],
-    points: 1
-  },
-  {
-    id: "Q107",
-    category: "BIOLOGICAL SCIENCE",
-    text: "The site of complete digestion of carbohydrates, proteins, and fats in the human alimentary canal is:",
-    options: [
-      { t: "Stomach", o: 0 },
-      { t: "Small Intestine (Ileum)", o: 1 },
-      { t: "Large Intestine", o: 2 },
-      { t: "Esophagus", o: 3 }
-    ],
-    points: 1
-  },
-  {
-    id: "Q108",
-    category: "BIOLOGICAL SCIENCE",
-    text: "Which plant hormone promotes cell division and is present in greater concentration in fruits and seeds?",
-    options: [
-      { t: "Abscisic Acid (ABA)", o: 0 },
-      { t: "Cytokinin", o: 1 },
-      { t: "Gibberellin", o: 2 },
-      { t: "Ethylene", o: 3 }
-    ],
-    points: 1
-  },
-  {
-    id: "Q109",
-    category: "BIOLOGICAL SCIENCE",
-    text: "In Mendel's monohybrid cross of tall (TT) and dwarf (tt) pea plants, the phenotypic ratio in the F2 generation is:",
-    options: [
-      { t: "1:2:1", o: 0 },
-      { t: "3:1", o: 1 },
-      { t: "9:3:3:1", o: 2 },
-      { t: "2:1", o: 3 }
-    ],
-    points: 1
-  },
-  {
-    id: "Q110",
-    category: "BIOLOGICAL SCIENCE",
-    text: "Which nephron structure in the kidney performs selective ultrafiltration of blood under high hydrostatic pressure?",
-    options: [
-      { t: "Bowman's Capsule & Glomerulus", o: 0 },
-      { t: "Loop of Henle", o: 1 },
-      { t: "Collecting Duct", o: 2 },
-      { t: "Proximal Convoluted Tubule", o: 3 }
-    ],
-    points: 1
-  }
-];
-
-// Client-safe placeholders for UI components (No complete rosters, credentials, or PII)
-export const DEFAULT_STUDENTS: StudentRecord[] = [
-  { examNo: "EX1001", dob: "15/08/2008", name: "S. Arun Kumar", classSec: "10 A", admnNo: "SPIC-8801" }
-];
-
-export const DEFAULT_TEACHERS: TeacherRecord[] = [
-  { email: "maharajan@spicschool.com", name: "Mr. Maharajan (Senior Faculty)", assigned: ["10 A", "10 B", "11 A", "12 A"] },
-  { email: "teacher.science@spicschool.com", name: "Mrs. S. Jayashree (Science)", assigned: ["10 A", "10 B"] }
-];
+// Real School Roster & Completed Exams from Official Datasets
+export const DEFAULT_STUDENTS: StudentRecord[] = SCHOOL_ROSTER_STUDENTS;
+export const DEFAULT_TEACHERS: TeacherRecord[] = SCHOOL_ROSTER_TEACHERS;
 
 export const DEFAULT_ADMIN = {
   adminId: "admin",
@@ -187,29 +61,15 @@ export const DEFAULT_ADMIN = {
   name: "Master Administrator - SPIC School"
 };
 
-const DEFAULT_EXAMS: ExamDocument[] = [
-  {
-    id: "spic-sci-10a",
-    title: "10 A - Unit 4 Evaluation",
-    subject: "Science (Physical & Biological)",
-    classSec: "10 A",
-    allowedTeachers: ["teacher.science@spicschool.com"],
-    status: "ACTIVE",
-    scoreStatus: "AUTO",
-    examMins: 10,
-    qCount: 10,
-    targetUrl: "https://docs.google.com/spreadsheets/d/spic_science_db_10a/edit",
-    questions: SAMPLE_SCIENCE_QUESTIONS
-  }
-];
+export const DEFAULT_EXAMS: ExamDocument[] = SCHOOL_EXAM_DOCUMENTS;
 
 const INITIAL_SUBMISSIONS: SubmissionDocument[] = [];
 
 // In-memory / local storage sync helper
-const STORAGE_KEY_EXAMS = 'spic_exams_cache_v2';
-const STORAGE_KEY_SUBS = 'spic_subs_cache_v2';
-const STORAGE_KEY_STUDENTS = 'spic_students_cache_v2';
-const STORAGE_KEY_TEACHERS = 'spic_teachers_cache_v2';
+const STORAGE_KEY_EXAMS = 'spic_exams_cache_v3';
+const STORAGE_KEY_SUBS = 'spic_subs_cache_v3';
+const STORAGE_KEY_STUDENTS = 'spic_students_cache_v3';
+const STORAGE_KEY_TEACHERS = 'spic_teachers_cache_v3';
 
 export function getLocalStudents(): StudentRecord[] {
   try {

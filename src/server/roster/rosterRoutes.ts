@@ -11,23 +11,12 @@ import {
   requireAdmin 
 } from '../middleware/authMiddleware';
 import { StudentRecord, TeacherRecord } from '../../types';
+import { SCHOOL_ROSTER_STUDENTS, SCHOOL_ROSTER_TEACHERS } from '../../data/schoolData';
 
 export const rosterRouter = Router();
 
-// Fallback seed students for school administration
-const fallbackStudents: StudentRecord[] = [
-  { examNo: "EX1001", dob: "15/08/2008", name: "S. Arun Kumar", classSec: "10 A", admnNo: "SPIC-8801" },
-  { examNo: "EX1002", dob: "22/11/2008", name: "P. Meenakshi", classSec: "10 A", admnNo: "SPIC-8802" },
-  { examNo: "EX1003", dob: "05/01/2008", name: "R. Vignesh", classSec: "10 A", admnNo: "SPIC-8803" },
-  { examNo: "EX1004", dob: "19/04/2008", name: "K. Divya", classSec: "10 A", admnNo: "SPIC-8804" },
-  { examNo: "EX1005", dob: "30/09/2008", name: "M. Karthik", classSec: "10 B", admnNo: "SPIC-8805" }
-];
-
-const fallbackTeachers: TeacherRecord[] = [
-  { email: "maharajan@spicschool.com", pass: "Teacher@2026", name: "Mr. Maharajan (Senior Faculty)", assigned: ["10 A", "10 B", "11 A", "12 A"] },
-  { email: "teacher.science@spicschool.com", pass: "Teacher@2026", name: "Mrs. S. Jayashree (Science)", assigned: ["10 A", "10 B"] },
-  { email: "teacher.maths@spicschool.com", pass: "Teacher@2026", name: "Mr. K. Narayanan (Maths)", assigned: ["10 A"] }
-];
+const fallbackStudents: StudentRecord[] = SCHOOL_ROSTER_STUDENTS;
+const fallbackTeachers: TeacherRecord[] = SCHOOL_ROSTER_TEACHERS;
 
 /**
  * GET /api/roster/students

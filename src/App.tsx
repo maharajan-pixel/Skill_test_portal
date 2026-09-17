@@ -33,6 +33,7 @@ import { ResultView } from './components/ResultView';
 import { InstructionsModal } from './components/InstructionsModal';
 import { ImportSheetModal } from './components/ImportSheetModal';
 import { RosterManagerModal } from './components/RosterManagerModal';
+import { GoogleWorkspaceModal } from './components/GoogleWorkspaceModal';
 
 type AppView = 
   | 'LOGIN'
@@ -103,6 +104,13 @@ export default function App() {
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isRosterModalOpen, setIsRosterModalOpen] = useState(false);
+  const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false);
+  const [workspaceModalInitialTab, setWorkspaceModalInitialTab] = useState<'SHEETS' | 'DRIVE' | 'GMAIL'>('SHEETS');
+
+  const handleOpenWorkspace = (tab: 'SHEETS' | 'DRIVE' | 'GMAIL' = 'SHEETS') => {
+    setWorkspaceModalInitialTab(tab);
+    setIsWorkspaceModalOpen(true);
+  };
 
   // Initialize and subscribe to Firestore
   useEffect(() => {
@@ -368,6 +376,7 @@ export default function App() {
             onOpenHelp={() => setIsHelpOpen(true)}
             onRefresh={handleRefresh}
             isRefreshing={isRefreshing}
+            onOpenWorkspace={handleOpenWorkspace}
           />
         )}
 
@@ -403,6 +412,7 @@ export default function App() {
                 isRefreshing={isRefreshing}
                 onOpenImportModal={() => setIsImportModalOpen(true)}
                 onOpenRosterModal={() => setIsRosterModalOpen(true)}
+                onOpenWorkspace={handleOpenWorkspace}
               />
             )}
 
@@ -420,6 +430,7 @@ export default function App() {
                 onOpenImportModal={() => setIsImportModalOpen(true)}
                 onOpenRosterModal={() => setIsRosterModalOpen(true)}
                 onExportAllCsv={handleExportAllCsv}
+                onOpenWorkspace={handleOpenWorkspace}
               />
             )}
 
@@ -441,6 +452,7 @@ export default function App() {
                 onBack={handleBackFromReport}
                 onRefresh={handleRefresh}
                 isRefreshing={isRefreshing}
+                onOpenWorkspace={handleOpenWorkspace}
               />
             )}
 
@@ -476,6 +488,16 @@ export default function App() {
       <RosterManagerModal
         isOpen={isRosterModalOpen}
         onClose={() => setIsRosterModalOpen(false)}
+      />
+
+      {/* Google Workspace Integration Hub (Sheets, Drive, Gmail) */}
+      <GoogleWorkspaceModal
+        isOpen={isWorkspaceModalOpen}
+        onClose={() => setIsWorkspaceModalOpen(false)}
+        initialTab={workspaceModalInitialTab}
+        exams={exams}
+        submissions={submissions}
+        currentUserEmail={currentUser && 'email' in currentUser ? (currentUser as any).email : undefined}
       />
 
       {/* Official SPIC School Footer */}

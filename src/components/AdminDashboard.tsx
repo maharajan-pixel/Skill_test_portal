@@ -28,6 +28,7 @@ interface AdminDashboardProps {
   onOpenImportModal: () => void;
   onOpenRosterModal: () => void;
   onExportAllCsv: () => void;
+  onOpenWorkspace?: (tab?: 'SHEETS' | 'DRIVE' | 'GMAIL') => void;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -41,7 +42,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   isRefreshing,
   onOpenImportModal,
   onOpenRosterModal,
-  onExportAllCsv
+  onExportAllCsv,
+  onOpenWorkspace
 }) => {
   const [updatingExamId, setUpdatingExamId] = useState<string | null>(null);
 
@@ -94,6 +96,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         {/* Global Action Bar */}
         <div className="flex flex-wrap items-center gap-2">
+          {onOpenWorkspace && (
+            <button
+              id="btn-admin-workspace"
+              onClick={() => onOpenWorkspace('SHEETS')}
+              className="bg-emerald-800 hover:bg-emerald-700 text-amber-300 text-xs font-black px-3.5 py-2 rounded-xl shadow-sm transition flex items-center gap-1.5 cursor-pointer border border-emerald-600"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>Google Workspace (Sheets • Drive • Gmail)</span>
+            </button>
+          )}
+
           <button
             id="btn-admin-manage-roster"
             onClick={onOpenRosterModal}

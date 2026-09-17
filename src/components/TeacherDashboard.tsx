@@ -1,6 +1,6 @@
 import React from 'react';
 import { TeacherUser, ExamDocument, SubmissionDocument } from '../types';
-import { BarChart3, Users, Clock, FileSpreadsheet, RefreshCw, CheckCircle, Upload, GraduationCap } from 'lucide-react';
+import { BarChart3, Users, Clock, FileSpreadsheet, RefreshCw, CheckCircle, Upload, GraduationCap, Sparkles } from 'lucide-react';
 
 interface TeacherDashboardProps {
   user: TeacherUser;
@@ -11,6 +11,7 @@ interface TeacherDashboardProps {
   isRefreshing: boolean;
   onOpenImportModal?: () => void;
   onOpenRosterModal?: () => void;
+  onOpenWorkspace?: (tab?: 'SHEETS' | 'DRIVE' | 'GMAIL') => void;
 }
 
 export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
@@ -21,7 +22,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   onRefresh,
   isRefreshing,
   onOpenImportModal,
-  onOpenRosterModal
+  onOpenRosterModal,
+  onOpenWorkspace
 }) => {
   // Filter exams managed by this teacher and ensure unique items
   const managedExams = React.useMemo(() => {
@@ -55,6 +57,17 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {onOpenWorkspace && (
+            <button
+              id="btn-teacher-workspace"
+              onClick={() => onOpenWorkspace('SHEETS')}
+              className="bg-emerald-800 hover:bg-emerald-700 text-amber-300 text-xs font-black px-3.5 py-2 rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer border border-emerald-600"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>Google Workspace (Sheets • Drive • Gmail)</span>
+            </button>
+          )}
+
           {onOpenImportModal && (
             <button
               id="btn-teacher-import"

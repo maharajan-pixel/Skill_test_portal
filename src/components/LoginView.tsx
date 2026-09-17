@@ -3,12 +3,9 @@ import { UserRole, AuthUser } from '../types';
 import { 
   authenticateUser, 
   authenticateByEmail, 
-  signInWithGoogleSSO, 
-  DEFAULT_STUDENTS, 
-  DEFAULT_TEACHERS, 
-  DEFAULT_ADMIN 
+  signInWithGoogleSSO 
 } from '../services/firebase';
-import { Eye, EyeOff, KeyRound, User, Lock, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Eye, EyeOff, KeyRound, User, Lock } from 'lucide-react';
 
 interface LoginViewProps {
   onLoginSuccess: (user: AuthUser) => void;
@@ -47,11 +44,13 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
       const user = await signInWithGoogleSSO(role);
       onLoginSuccess(user);
     } catch (err: any) {
-      console.warn("Google SSO Popup Notice:", err);
-      // In embedded iFrame environments or popup blocked, offer quick fallback
+      console.warn("Google SSO Notice:", err);
+      if (err.code === 'auth/unauthorized-domain') {
+        setErrorMessage('This domain is not in the Firebase Authorized Domains list. Please authenticate using your School Credentials below, or add this custom domain to Firebase Console > Authentication > Settings > Authorized domains.');
+        return;
+      }
       if (
         err.code === 'auth/popup-blocked' || 
-        err.code === 'auth/unauthorized-domain' || 
         err.code === 'auth/popup-closed-by-user' ||
         err.code === 'auth/cancelled-popup-request' ||
         (err.message && err.message.toLowerCase().includes('popup'))
@@ -77,59 +76,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     }
   };
 
-  // Demo credential autofill helper
-  const handleQuickFill = (targetRole: UserRole, targetId: string, targetPass: string) => {
-    setRole(targetRole);
-    setUserId(targetId);
-    setPassword(targetPass);
-    setErrorMessage('');
-  };
-
   return (
     <div className="p-4 sm:p-8 max-w-4xl mx-auto min-h-[60vh] flex flex-col justify-center">
-      
-      {/* Quick Demo Selector */}
-      <div className="mb-6 bg-amber-50/80 border border-amber-200/80 rounded-2xl p-3 sm:p-4 shadow-xs">
-        <div className="flex items-center gap-2 mb-2 text-amber-900 font-black text-xs uppercase tracking-wider">
-          <Sparkles className="w-4 h-4 text-amber-600" />
-          <span>Quick Switch Test Accounts (1-Click Auto-Fill)</span>
-        </div>
-        <div className="flex flex-wrap gap-2 text-xs">
-          <button
-            type="button"
-            onClick={() => handleQuickFill('STUDENT', DEFAULT_STUDENTS[0].examNo, DEFAULT_STUDENTS[0].dob)}
-            className="px-3 py-1.5 bg-white hover:bg-amber-100/60 border border-amber-300/80 rounded-xl font-bold text-slate-800 transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
-          >
-            <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
-            Student: S. Arun Kumar (10 A)
-          </button>
-          <button
-            type="button"
-            onClick={() => handleQuickFill('TEACHER', 'maharajan@spicschool.com', '')}
-            className="px-3 py-1.5 bg-white hover:bg-indigo-100/60 border border-indigo-200 rounded-xl font-bold text-slate-800 transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
-          >
-            <span className="w-2 h-2 rounded-full bg-purple-600"></span>
-            Teacher: maharajan@spicschool.com
-          </button>
-          <button
-            type="button"
-            onClick={() => handleQuickFill('TEACHER', 'teacher.science@spicschool.com', '')}
-            className="px-3 py-1.5 bg-white hover:bg-indigo-100/60 border border-indigo-200 rounded-xl font-bold text-slate-800 transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
-          >
-            <span className="w-2 h-2 rounded-full bg-purple-600"></span>
-            Teacher: Mrs. Jayashree
-          </button>
-          <button
-            type="button"
-            onClick={() => handleQuickFill('ADMIN', 'admin', '')}
-            className="px-3 py-1.5 bg-white hover:bg-rose-100/60 border border-rose-200 rounded-xl font-bold text-slate-800 transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
-          >
-            <span className="w-2 h-2 rounded-full bg-rose-600"></span>
-            Master Admin
-          </button>
-        </div>
-      </div>
-
       <div className="max-w-xl mx-auto w-full">
         {/* Domain email guidance note */}
         {role === 'TEACHER' && (

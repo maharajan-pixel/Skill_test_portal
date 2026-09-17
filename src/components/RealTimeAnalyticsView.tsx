@@ -25,7 +25,12 @@ import {
   TrendingUp, 
   AlertCircle,
   ShieldCheck,
-  AlertTriangle 
+  AlertTriangle,
+  Mail,
+  HardDrive,
+  ExternalLink,
+  Sparkles,
+  Download
 } from 'lucide-react';
 
 interface RealTimeAnalyticsViewProps {
@@ -34,6 +39,7 @@ interface RealTimeAnalyticsViewProps {
   onBack: () => void;
   onRefresh: () => void;
   isRefreshing: boolean;
+  onOpenWorkspace?: (tab?: 'SHEETS' | 'DRIVE' | 'GMAIL') => void;
 }
 
 const SCORE_BAND_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'];
@@ -43,7 +49,8 @@ export const RealTimeAnalyticsView: React.FC<RealTimeAnalyticsViewProps> = ({
   submissions,
   onBack,
   onRefresh,
-  isRefreshing
+  isRefreshing,
+  onOpenWorkspace
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedViolationLogs, setSelectedViolationLogs] = useState<{
@@ -275,19 +282,50 @@ export const RealTimeAnalyticsView: React.FC<RealTimeAnalyticsViewProps> = ({
             <span>Sync Latest</span>
           </button>
 
+          {onOpenWorkspace && (
+            <>
+              <button
+                id="btn-report-sheets-workspace"
+                onClick={() => onOpenWorkspace('SHEETS')}
+                className="bg-emerald-700 hover:bg-emerald-800 text-white px-3.5 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-200" />
+                <span>Google Sheets Hub</span>
+              </button>
+
+              <button
+                id="btn-report-gmail-dispatch"
+                onClick={() => onOpenWorkspace('GMAIL')}
+                className="bg-red-600 hover:bg-red-700 text-white px-3.5 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+              >
+                <Mail className="w-3.5 h-3.5 text-amber-200" />
+                <span>Dispatch via Gmail</span>
+              </button>
+
+              <button
+                id="btn-report-drive-backup"
+                onClick={() => onOpenWorkspace('DRIVE')}
+                className="bg-indigo-900 hover:bg-indigo-800 text-white px-3.5 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+              >
+                <HardDrive className="w-3.5 h-3.5 text-indigo-300" />
+                <span>Save to Drive</span>
+              </button>
+            </>
+          )}
+
           <button
             id="btn-export-sheets"
             onClick={handleExportCsv}
-            className="bg-emerald-700 hover:bg-emerald-800 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+            className="bg-slate-700 hover:bg-slate-800 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
           >
-            <FileSpreadsheet className="w-3.5 h-3.5" />
-            <span>Export to Sheet (CSV)</span>
+            <Download className="w-3.5 h-3.5" />
+            <span>Download CSV</span>
           </button>
 
           <button
             id="btn-print-report"
             onClick={() => window.print()}
-            className="bg-indigo-900 hover:bg-indigo-800 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+            className="bg-slate-800 hover:bg-slate-900 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
           >
             <Printer className="w-3.5 h-3.5" />
             <span>Print Gazette</span>

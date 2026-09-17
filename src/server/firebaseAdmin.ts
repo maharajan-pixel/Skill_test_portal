@@ -35,8 +35,8 @@ if (existingApps.length === 0) {
 }
 
 // Privileged Firestore Admin instance - bypasses client security rules
-export const serverDb: Firestore = firebaseConfig.firestoreDatabaseId
-  ? getAdminFirestore(adminApp, firebaseConfig.firestoreDatabaseId)
+export const serverDb: Firestore = (firebaseConfig as any).firestoreDatabaseId
+  ? getAdminFirestore(adminApp, (firebaseConfig as any).firestoreDatabaseId)
   : getAdminFirestore(adminApp);
 
 // Cache for in-memory fallback / quick lookup during offline or testing

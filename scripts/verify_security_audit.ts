@@ -25,8 +25,8 @@ async function runSecurityAudit() {
   // ----------------------------------------------------
   console.log('--- TEST 1: Direct Client Access to Protected Firestore Collections ---');
   const clientApp = initClientApp(firebaseConfig, 'audit-client-test-' + Date.now());
-  const clientDb = firebaseConfig.firestoreDatabaseId 
-    ? getClientFirestore(clientApp, firebaseConfig.firestoreDatabaseId)
+  const clientDb = (firebaseConfig as any).firestoreDatabaseId 
+    ? getClientFirestore(clientApp, (firebaseConfig as any).firestoreDatabaseId)
     : getClientFirestore(clientApp);
 
   const clientDeniedTests = [
@@ -64,7 +64,9 @@ async function runSecurityAudit() {
     credential: cert(sa),
     projectId: firebaseConfig.projectId
   }, 'audit-admin-' + Date.now());
-  const adminDb = getAdminFirestore(adminApp, firebaseConfig.firestoreDatabaseId);
+  const adminDb = (firebaseConfig as any).firestoreDatabaseId
+    ? getAdminFirestore(adminApp, (firebaseConfig as any).firestoreDatabaseId)
+    : getAdminFirestore(adminApp);
 
   try {
     const adminRosterSnap = await adminDb.collection('roster').where('type', '==', 'STUDENT').get();

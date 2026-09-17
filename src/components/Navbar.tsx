@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AuthUser } from '../types';
-import { Shield, BookOpen, Clock, LogOut, HelpCircle, RefreshCw } from 'lucide-react';
+import { Shield, BookOpen, Clock, LogOut, HelpCircle, RefreshCw, Sparkles } from 'lucide-react';
 
 interface NavbarProps {
   user: AuthUser | null;
@@ -8,6 +8,7 @@ interface NavbarProps {
   onOpenHelp: () => void;
   onRefresh?: () => void;
   isRefreshing?: boolean;
+  onOpenWorkspace?: (tab?: 'SHEETS' | 'DRIVE' | 'GMAIL') => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -15,7 +16,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onLogout,
   onOpenHelp,
   onRefresh,
-  isRefreshing = false
+  isRefreshing = false,
+  onOpenWorkspace
 }) => {
   const [timeStr, setTimeStr] = useState('');
 
@@ -75,6 +77,18 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* User Session Info / Logout */}
             {user && (
               <div className="flex items-center gap-2 bg-indigo-900/90 border border-indigo-800 px-3 py-1.5 rounded-xl">
+                {(user.role === 'TEACHER' || user.role === 'ADMIN') && onOpenWorkspace && (
+                  <button
+                    id="btn-nav-workspace"
+                    onClick={() => onOpenWorkspace('SHEETS')}
+                    title="Google Workspace Hub (Sheets, Drive, Gmail)"
+                    className="p-1.5 rounded-lg bg-emerald-700/80 hover:bg-emerald-600 text-amber-300 transition cursor-pointer flex items-center gap-1 font-bold text-[11px]"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="hidden sm:inline">Workspace</span>
+                  </button>
+                )}
+
                 <div className="text-right">
                   <div className="text-[11px] font-bold text-indigo-100 flex items-center gap-1 justify-end">
                     <span className="w-2 h-2 rounded-full bg-emerald-400"></span>

@@ -12,10 +12,21 @@ import {
   AlertCircle,
   Clock,
   BookOpen,
-  FileText
+  FileText,
+  HardDrive,
+  RefreshCw
 } from 'lucide-react';
 import { ExamDocument, QuestionItem } from '../types';
 import { ClassSectionSelector } from './ClassSectionSelector';
+import { 
+  isWorkspaceConnected, 
+  connectGoogleWorkspace, 
+  fetchSpreadsheetMetadata, 
+  fetchSheetValues, 
+  parseSheetRowsToQuestions,
+  listGoogleDriveFiles,
+  DriveFileItem
+} from '../services/googleWorkspace';
 
 interface ImportSheetModalProps {
   isOpen: boolean;
@@ -46,7 +57,79 @@ export const ImportSheetModal: React.FC<ImportSheetModalProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState<'PASTE' | 'PREVIEW' | 'GUIDE'>('PASTE');
 
+  // Google Workspace Integration State
+  const [isFetchingSheet, setIsFetchingSheet] = useState(false);
+  const [driveSpreadsheets, setDriveSpreadsheets] = useState<DriveFileItem[]>([]);
+  const [showDrivePicker, setShowDrivePicker] = useState(false);
+  const [isLoadingDrive, setIsLoadingDrive] = useState(false);
+  const [workspaceNotice, setWorkspaceNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch from Google Sheets API directly
+  const handleFetchFromGoogleSheets = async (targetUrl?: string) => {
+    const urlToFetch = targetUrl || sheetUrl;
+    if (!urlToFetch.trim()) {
+      setWorkspaceNotice({ type: 'error', message: 'Please enter a Google Spreadsheet URL or select one from Drive.' });
+      return;
+    }
+
+    setIsFetchingSheet(true);
+    setWorkspaceNotice(null);
+
+    try {
+      if (!isWorkspaceConnected()) {
+        await connectGoogleWorkspace();
+      }
+
+      const meta = await fetchSpreadsheetMetadata(urlToFetch.trim());
+      if (!meta.sheets.length) {
+        throw new Error('No sheets found in the spreadsheet.');
+      }
+
+      const firstSheet = meta.sheets[0].title;
+      const rows = await fetchSheetValues(meta.id, `${firstSheet}!A1:Z100`);
+      const { questions, detectedSubject } = parseSheetRowsToQuestions(rows);
+
+      if (questions.length === 0) {
+        throw new Error('No valid questions found in sheet. Ensure headers match ID | SUBJECT | Question_Text | Options | Correct_Answer | Points');
+      }
+
+      setParsedQuestions(questions);
+      if (!title) {
+        setTitle(meta.title.replace(/template/i, '').trim() || `Class ${classSec} - ${detectedSubject || 'Assessment'}`);
+      }
+      if (detectedSubject) {
+        setSubject(detectedSubject);
+      }
+      setTotalMarks(questions.length);
+      setSheetUrl(urlToFetch);
+      setActiveTab('PREVIEW');
+      setWorkspaceNotice({ type: 'success', message: `Imported ${questions.length} questions from Google Sheet "${meta.title}"!` });
+    } catch (err: any) {
+      console.error('Google Sheets fetch error:', err);
+      setWorkspaceNotice({ type: 'error', message: err.message || 'Failed to read questions from Google Sheets.' });
+    } finally {
+      setIsFetchingSheet(false);
+    }
+  };
+
+  const handleOpenDrivePicker = async () => {
+    setShowDrivePicker(true);
+    setIsLoadingDrive(true);
+    try {
+      if (!isWorkspaceConnected()) {
+        await connectGoogleWorkspace();
+      }
+      const files = await listGoogleDriveFiles('spreadsheets');
+      setDriveSpreadsheets(files);
+    } catch (err: any) {
+      console.error('Drive listing error:', err);
+      setWorkspaceNotice({ type: 'error', message: err.message || 'Failed to load Google Drive spreadsheets.' });
+    } finally {
+      setIsLoadingDrive(false);
+    }
+  };
 
   // Exact header format requested by user:
   // "ID	SUBJECT	Question_Text	Option_A	Option_B	Option_C	Option_D	Correct_Answer	Points"
@@ -572,17 +655,106 @@ export const ImportSheetModal: React.FC<ImportSheetModalProps> = ({
                 </div>
               </div>
 
-              <div>
-                <label className="block text-[11px] uppercase tracking-wider text-slate-500 mb-1">
-                  Optional Google Spreadsheet URL
-                </label>
-                <input
-                  type="url"
-                  value={sheetUrl}
-                  onChange={e => setSheetUrl(e.target.value)}
-                  placeholder="https://docs.google.com/spreadsheets/d/your_sheet_id/edit"
-                  className="w-full border-2 border-slate-200 rounded-xl p-2.5 bg-slate-50 font-mono text-xs text-slate-800 focus:border-indigo-600 outline-none"
-                />
+              {/* Google Workspace Direct Sheets & Drive Import Box */}
+              <div className="bg-emerald-50/70 border-2 border-emerald-200 rounded-2xl p-3.5 sm:p-4 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <FileSpreadsheet className="w-4 h-4 text-emerald-700" />
+                    <label className="text-xs font-black uppercase tracking-wider text-emerald-950">
+                      Live Google Sheets & Drive Integration
+                    </label>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleOpenDrivePicker}
+                      className="bg-white hover:bg-emerald-100 text-emerald-900 border border-emerald-300 text-[11px] font-bold px-2.5 py-1 rounded-lg transition flex items-center gap-1 shadow-2xs cursor-pointer"
+                    >
+                      <HardDrive className="w-3.5 h-3.5 text-emerald-700" />
+                      <span>Browse Drive Spreadsheets</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="url"
+                    value={sheetUrl}
+                    onChange={e => setSheetUrl(e.target.value)}
+                    placeholder="https://docs.google.com/spreadsheets/d/your_sheet_id/edit"
+                    className="flex-1 border-2 border-emerald-300 rounded-xl p-2.5 bg-white font-mono text-xs text-slate-800 focus:border-emerald-600 outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleFetchFromGoogleSheets()}
+                    disabled={isFetchingSheet}
+                    className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs px-4 py-2 rounded-xl transition flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer disabled:opacity-50 shrink-0"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isFetchingSheet ? 'animate-spin' : ''}`} />
+                    <span>{isFetchingSheet ? 'Reading...' : 'Fetch Questions'}</span>
+                  </button>
+                </div>
+
+                {workspaceNotice && (
+                  <div className={`p-2.5 rounded-xl text-xs font-bold flex items-center gap-2 ${
+                    workspaceNotice.type === 'success' 
+                      ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' 
+                      : 'bg-red-50 text-red-800 border border-red-200'
+                  }`}>
+                    {workspaceNotice.type === 'success' ? (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                    ) : (
+                      <AlertCircle className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                    )}
+                    <span>{workspaceNotice.message}</span>
+                  </div>
+                )}
+
+                {/* Drive Spreadsheets Quick Picker */}
+                {showDrivePicker && (
+                  <div className="bg-white border border-emerald-200 rounded-xl p-3 shadow-xs space-y-2">
+                    <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                      <span>Select a Spreadsheet from your Google Drive:</span>
+                      <button
+                        type="button"
+                        onClick={() => setShowDrivePicker(false)}
+                        className="text-slate-400 hover:text-slate-600"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {isLoadingDrive ? (
+                      <p className="text-xs text-slate-500 py-2 flex items-center gap-1.5">
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        <span>Searching Google Drive...</span>
+                      </p>
+                    ) : driveSpreadsheets.length === 0 ? (
+                      <p className="text-xs text-slate-500 py-2">
+                        No spreadsheets found in Drive root. You can paste a direct Google Sheets URL above.
+                      </p>
+                    ) : (
+                      <div className="max-h-36 overflow-y-auto divide-y divide-slate-100 text-xs">
+                        {driveSpreadsheets.map(file => (
+                          <div
+                            key={file.id}
+                            onClick={() => {
+                              const url = `https://docs.google.com/spreadsheets/d/${file.id}/edit`;
+                              setSheetUrl(url);
+                              setShowDrivePicker(false);
+                              handleFetchFromGoogleSheets(url);
+                            }}
+                            className="p-2 hover:bg-emerald-50 flex items-center justify-between cursor-pointer rounded-lg transition"
+                          >
+                            <span className="font-bold text-slate-800 truncate">{file.name}</span>
+                            <span className="text-[11px] text-emerald-700 font-bold shrink-0 ml-2">Select & Import →</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </>
           )}

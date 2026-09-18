@@ -38,6 +38,7 @@ import {
   SCHOOL_ROSTER_TEACHERS, 
   SCHOOL_EXAM_DOCUMENTS 
 } from '../data/schoolData';
+import { SCHOOL_ROSTER_SUBMISSIONS } from '../data/schoolSubmissions';
 
 // Initialize Firebase App
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
@@ -63,7 +64,7 @@ export const DEFAULT_ADMIN = {
 
 export const DEFAULT_EXAMS: ExamDocument[] = SCHOOL_EXAM_DOCUMENTS;
 
-const INITIAL_SUBMISSIONS: SubmissionDocument[] = [];
+const INITIAL_SUBMISSIONS: SubmissionDocument[] = SCHOOL_ROSTER_SUBMISSIONS;
 
 // In-memory / local storage sync helper
 const STORAGE_KEY_EXAMS = 'spic_exams_cache_v3';
@@ -175,20 +176,20 @@ function saveLocalExams(exams: ExamDocument[]) {
 function getLocalSubs(): SubmissionDocument[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_SUBS);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        const seen = new Set<string>();
-        return parsed.filter((s: SubmissionDocument) => {
-          const key = s.id || `${s.examId}-${s.admnNo}`;
-          if (seen.has(key)) return false;
-          seen.add(key);
-          return true;
-        });
+    const existing: SubmissionDocument[] = raw ? JSON.parse(raw) : [];
+    const map = new Map<string, SubmissionDocument>();
+    for (const s of INITIAL_SUBMISSIONS) {
+      const key = s.id || `${s.examId}-${s.admnNo}`;
+      map.set(key, s);
+    }
+    if (Array.isArray(existing)) {
+      for (const s of existing) {
+        const key = s.id || `${s.examId}-${s.admnNo}`;
+        map.set(key, s);
       }
     }
+    return Array.from(map.values());
   } catch (e) {}
-  localStorage.setItem(STORAGE_KEY_SUBS, JSON.stringify(INITIAL_SUBMISSIONS));
   return INITIAL_SUBMISSIONS;
 }
 
@@ -281,9 +282,18 @@ export function subscribeSubmissions(examId: string | null, callback: (subs: Sub
     try {
       const res = await safeFetchJson<{ submissions?: SubmissionDocument[] }>('/api/exams/submissions');
       if (res.ok && res.isJson && res.data?.submissions) {
-        const subs: SubmissionDocument[] = res.data.submissions;
-        saveLocalSubs(subs);
-        const filtered = examId ? subs.filter(s => s.examId === examId) : subs;
+        const apiSubs: SubmissionDocument[] = res.data.submissions;
+        const map = new Map<string, SubmissionDocument>();
+        // Ensure official roster submissions are present
+        for (const s of INITIAL_SUBMISSIONS) {
+          map.set(s.id || `${s.examId}-${s.admnNo}`, s);
+        }
+        for (const s of apiSubs) {
+          map.set(s.id || `${s.examId}-${s.admnNo}`, s);
+        }
+        const merged = Array.from(map.values());
+        saveLocalSubs(merged);
+        const filtered = examId ? merged.filter(s => s.examId === examId) : merged;
         if (active) callback(filtered);
         return;
       }
@@ -303,6 +313,50 @@ export function subscribeSubmissions(examId: string | null, callback: (subs: Sub
     active = false;
     clearInterval(interval);
   };
+}
+
+// Bulk Save / Sync Submissions from Teacher Sheet Scoreboard
+export async function bulkSaveSubmissions(examId: string, newSubs: SubmissionDocument[]): Promise<number> {
+  if (!newSubs || newSubs.length === 0) return 0;
+
+  // 1. Update local storage cache immediately for fast UI feedback
+  const existing = getLocalSubs();
+  const map = new Map<string, SubmissionDocument>();
+  for (const s of existing) {
+    const key = `${s.examId}-${s.admnNo}`;
+    map.set(key, s);
+  }
+  for (const s of newSubs) {
+    const key = `${s.examId}-${s.admnNo}`;
+    map.set(key, s);
+  }
+  const merged = Array.from(map.values());
+  saveLocalSubs(merged);
+
+  // 2. Persist to server backend API
+  try {
+    await fetch('/api/exams/submissions/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ examId, submissions: newSubs })
+    });
+  } catch (e) {
+    console.warn('[bulkSaveSubmissions] API notice:', e);
+  }
+
+  // 3. Persist directly to Firestore
+  try {
+    for (const sub of newSubs) {
+      await addDoc(collection(db, 'submissions'), {
+        ...sub,
+        submittedAt: new Date(sub.submittedAt || Date.now())
+      }).catch(() => {});
+    }
+  } catch (e) {
+    console.warn('[bulkSaveSubmissions] Firestore sync notice:', e);
+  }
+
+  return newSubs.length;
 }
 
 // Toggle Exam Status: ACTIVE <-> CLOSED

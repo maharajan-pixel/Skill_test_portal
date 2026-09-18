@@ -61,6 +61,59 @@ submissionRouter.get('/submissions', requireAuth, async (req: AuthenticatedReque
 });
 
 /**
+ * POST /api/exams/submissions/bulk
+ * Bulk save / sync submissions from Teacher Google Sheet Scoreboard
+ */
+submissionRouter.post('/submissions/bulk', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const user = req.user!;
+    if (user.role !== 'ADMIN' && user.role !== 'TEACHER') {
+      res.status(403).json({ error: 'Only teachers and administrators can import scoreboard submissions.' });
+      return;
+    }
+
+    const { examId, submissions: bulkSubs } = req.body;
+    if (!examId || !Array.isArray(bulkSubs) || bulkSubs.length === 0) {
+      res.status(400).json({ error: 'examId and a non-empty submissions array are required.' });
+      return;
+    }
+
+    let savedCount = 0;
+    for (const sub of bulkSubs) {
+      if (!sub.admnNo || !sub.name) continue;
+      const cleanSub: SubmissionDocument = {
+        examId,
+        admnNo: String(sub.admnNo).trim(),
+        name: String(sub.name).trim(),
+        classSec: String(sub.classSec || '').trim(),
+        score: String(sub.score || '0').trim(),
+        earnedPoints: Number(sub.earnedPoints ?? sub.correct ?? 0),
+        totalMarks: Number(sub.totalMarks ?? 10),
+        correct: Number(sub.correct ?? 0),
+        wrong: Number(sub.wrong ?? 0),
+        skipped: Number(sub.skipped ?? 0),
+        timeUsed: String(sub.timeUsed || '5m 0s'),
+        secsConsumed: Number(sub.secsConsumed ?? 300),
+        categoryBreakdown: String(sub.categoryBreakdown || ''),
+        detailedAnswers: sub.detailedAnswers || {},
+        submittedAt: sub.submittedAt || new Date().toISOString(),
+        tabSwitchCount: Number(sub.tabSwitchCount ?? 0),
+        proctorViolations: Array.isArray(sub.proctorViolations) ? sub.proctorViolations : [],
+        proctorStatus: sub.proctorStatus || 'CLEAN'
+      };
+
+      await saveAuthoritativeSubmission(cleanSub);
+      savedCount++;
+    }
+
+    res.json({ success: true, count: savedCount });
+  } catch (err: any) {
+    console.error('[submissionRoutes] Error bulk syncing submissions:', err);
+    res.status(500).json({ error: err.message || 'Failed to bulk import submissions.' });
+  }
+});
+
+/**
  * POST /api/exams/submit
  * Server-authoritative Exam Submission & Tamper-Proof Auto-Grading.
  * Client sends ONLY raw answers. The server calculates all scores, points,

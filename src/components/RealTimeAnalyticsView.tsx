@@ -32,6 +32,8 @@ import {
   Sparkles,
   Download
 } from 'lucide-react';
+import { SyncScoreboardModal } from './SyncScoreboardModal';
+import { SCHOOL_ROSTER_SUBMISSIONS } from '../data/schoolSubmissions';
 
 interface RealTimeAnalyticsViewProps {
   exam: ExamDocument;
@@ -53,6 +55,7 @@ export const RealTimeAnalyticsView: React.FC<RealTimeAnalyticsViewProps> = ({
   onOpenWorkspace
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [selectedViolationLogs, setSelectedViolationLogs] = useState<{
     name: string;
     admnNo: string;
@@ -61,10 +64,20 @@ export const RealTimeAnalyticsView: React.FC<RealTimeAnalyticsViewProps> = ({
     status: string;
   } | null>(null);
 
-  // Filter submissions for this specific exam
+  // Filter submissions for this specific exam with fallback to official school roster submissions
   const examSubmissions = useMemo(() => {
-    return submissions.filter(s => s.examId === exam.id);
-  }, [submissions, exam.id]);
+    const direct = submissions.filter(s => s.examId === exam.id || s.examId === exam.code);
+    if (direct.length > 0) return direct;
+
+    const rosterMatches = SCHOOL_ROSTER_SUBMISSIONS.filter(s => 
+      s.examId === exam.id || 
+      s.examId === exam.code || 
+      (s.classSec === exam.classSec && (exam.id.includes(s.examId) || s.examId.includes(exam.id)))
+    );
+    if (rosterMatches.length > 0) return rosterMatches;
+
+    return [];
+  }, [submissions, exam.id, exam.code, exam.classSec]);
 
   // Search filtered submissions
   const filteredSubmissions = useMemo(() => {
@@ -294,6 +307,15 @@ export const RealTimeAnalyticsView: React.FC<RealTimeAnalyticsViewProps> = ({
             <span>Sync Latest</span>
           </button>
 
+          <button
+            id="btn-sync-sheet-scoreboard"
+            onClick={() => setIsSyncModalOpen(true)}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-200" />
+            <span>Sync Sheet Scoreboard</span>
+          </button>
+
           {onOpenWorkspace && (
             <>
               <button
@@ -344,6 +366,32 @@ export const RealTimeAnalyticsView: React.FC<RealTimeAnalyticsViewProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Notice Banner when 0 submissions are present */}
+      {totalSubmissions === 0 && (
+        <div className="bg-emerald-50 border-2 border-emerald-300/80 rounded-2xl p-4 sm:p-5 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <FileSpreadsheet className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-emerald-950">
+                Scores Not Yet Updated from Teacher Sheet?
+              </h3>
+              <p className="text-xs text-emerald-800/90 font-medium">
+                Fetch and sync student marks and candidate scores directly from your Google Sheet (Column D: <code>Teacher_Sheet_URL</code> &bull; <strong>Scoreboard</strong> sheet tab).
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setIsSyncModalOpen(true)}
+            className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-black uppercase tracking-wider transition flex items-center gap-2 shrink-0 cursor-pointer shadow-sm"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Fetch Sheet Scores</span>
+          </button>
+        </div>
+      )}
 
       {/* KPI Cards Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-8">
@@ -530,8 +578,25 @@ export const RealTimeAnalyticsView: React.FC<RealTimeAnalyticsViewProps> = ({
             <tbody className="divide-y divide-slate-100">
               {filteredSubmissions.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="p-6 text-center text-slate-400 font-bold text-xs">
-                    No submissions recorded yet for this examination.
+                  <td colSpan={8} className="p-10 text-center">
+                    <div className="max-w-md mx-auto space-y-3">
+                      <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 mx-auto flex items-center justify-center">
+                        <FileSpreadsheet className="w-6 h-6" />
+                      </div>
+                      <p className="text-sm font-black text-slate-800">
+                        No submissions recorded in portal yet
+                      </p>
+                      <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                        Are candidate marks recorded in your Google Sheet's <strong>Scoreboard</strong> tab? Fetch and sync scores directly into this report with one click.
+                      </p>
+                      <button
+                        onClick={() => setIsSyncModalOpen(true)}
+                        className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-black uppercase tracking-wider transition inline-flex items-center gap-2 cursor-pointer shadow-sm"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                        <span>Sync Scores from Google Sheet</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -664,6 +729,16 @@ export const RealTimeAnalyticsView: React.FC<RealTimeAnalyticsViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* Modal for Syncing Scoreboard from Teacher Google Sheet */}
+      <SyncScoreboardModal
+        isOpen={isSyncModalOpen}
+        onClose={() => setIsSyncModalOpen(false)}
+        exam={exam}
+        onSyncSuccess={() => {
+          onRefresh();
+        }}
+      />
 
     </div>
   );

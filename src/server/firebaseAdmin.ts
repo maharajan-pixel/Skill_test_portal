@@ -15,6 +15,7 @@ import {
   SCHOOL_ROSTER_TEACHERS, 
   SCHOOL_EXAM_DOCUMENTS 
 } from '../data/schoolData';
+import { SCHOOL_ROSTER_SUBMISSIONS } from '../data/schoolSubmissions';
 
 // Server-side Firebase Admin SDK initialization
 let adminApp: App;
@@ -365,6 +366,7 @@ export async function saveServerExamSession(
 
 // In-memory fallback submissions list for demonstration/testing
 const memoryAllSubmissionsList: SubmissionDocument[] = [
+  ...SCHOOL_ROSTER_SUBMISSIONS,
   {
     id: "SUB-INIT-001",
     examId: "spic-sci-10a",
@@ -385,48 +387,6 @@ const memoryAllSubmissionsList: SubmissionDocument[] = [
     tabSwitchCount: 0,
     proctorViolations: [],
     proctorStatus: 'CLEAN'
-  },
-  {
-    id: "SUB-INIT-002",
-    examId: "spic-sci-10a",
-    admnNo: "SPIC-8802",
-    name: "P. Meenakshi",
-    classSec: "10 A",
-    score: "8 out of 10",
-    earnedPoints: 8,
-    totalMarks: 10,
-    correct: 8,
-    wrong: 2,
-    skipped: 0,
-    timeUsed: "08m 20s",
-    secsConsumed: 500,
-    categoryBreakdown: "PHYSICAL: 4/5 | BIOLOGICAL: 4/5",
-    detailedAnswers: { "Q101": 1, "Q102": 1, "Q103": 1, "Q104": 2, "Q105": 1, "Q106": 0, "Q107": 1, "Q108": 0, "Q109": 1, "Q110": 2 },
-    submittedAt: new Date(Date.now() - 3600000 * 4).toISOString(),
-    tabSwitchCount: 1,
-    proctorViolations: ["Tab switch detected (Count: 1)"],
-    proctorStatus: 'WARNED'
-  },
-  {
-    id: "SUB-INIT-003",
-    examId: "spic-sci-10a",
-    admnNo: "SPIC-8803",
-    name: "R. Vignesh",
-    classSec: "10 A",
-    score: "9 out of 10",
-    earnedPoints: 9,
-    totalMarks: 10,
-    correct: 9,
-    wrong: 1,
-    skipped: 0,
-    timeUsed: "05m 12s",
-    secsConsumed: 312,
-    categoryBreakdown: "PHYSICAL: 5/5 | BIOLOGICAL: 4/5",
-    detailedAnswers: { "Q101": 1, "Q102": 1, "Q103": 0, "Q104": 2, "Q105": 1, "Q106": 1, "Q107": 1, "Q108": 1, "Q109": 1, "Q110": 2 },
-    submittedAt: new Date(Date.now() - 3600000 * 6).toISOString(),
-    tabSwitchCount: 0,
-    proctorViolations: [],
-    proctorStatus: 'CLEAN'
   }
 ];
 
@@ -434,28 +394,29 @@ const memoryAllSubmissionsList: SubmissionDocument[] = [
  * Fetch all Submissions from Firestore or fallback
  */
 export async function getAllServerSubmissions(): Promise<SubmissionDocument[]> {
+  const inMemMap = new Map<string, SubmissionDocument>();
+  
+  // Seed with official school roster submissions
+  memoryAllSubmissionsList.forEach(s => inMemMap.set(s.id || `${s.examId}-${s.admnNo}`, s));
+  memorySubmissions.forEach((v, k) => inMemMap.set(v.id || k, v));
+
   try {
     const snap = await serverDb.collection('submissions').get();
     if (!snap.empty) {
-      const subs: SubmissionDocument[] = [];
       snap.forEach(d => {
         const data = d.data();
-        subs.push({
+        const sub = {
           ...data,
           id: d.id,
           submittedAt: data.submittedAt || data.serverCreatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
-        } as SubmissionDocument);
+        } as SubmissionDocument;
+        inMemMap.set(sub.id || `${sub.examId}-${sub.admnNo}`, sub);
       });
-      return subs;
     }
   } catch (err) {
-    console.warn('[serverDb] Notice reading all submissions from Firestore:', err);
+    console.warn('[serverDb] Notice reading submissions from Firestore:', err);
   }
 
-  // Fallback to in-memory list
-  const inMemMap = new Map<string, SubmissionDocument>();
-  memoryAllSubmissionsList.forEach(s => inMemMap.set(s.id || `${s.examId}-${s.admnNo}`, s));
-  memorySubmissions.forEach((v, k) => inMemMap.set(v.id || k, v));
   return Array.from(inMemMap.values());
 }
 

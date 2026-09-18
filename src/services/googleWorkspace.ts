@@ -121,6 +121,17 @@ export interface SheetMetadata {
 }
 
 /**
+ * Safely parse JSON from a response, avoiding syntax errors if an HTML error page is returned
+ */
+async function parseResponseJson<T = any>(res: Response): Promise<T> {
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    throw new Error(`Google API returned unexpected non-JSON response (${res.status} ${res.statusText})`);
+  }
+  return res.json();
+}
+
+/**
  * Extract Spreadsheet ID from full URL or return ID directly
  */
 export function extractSpreadsheetId(urlOrId: string): string {
@@ -143,11 +154,12 @@ export async function fetchSpreadsheetMetadata(spreadsheetId: string): Promise<S
   });
 
   if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
+    const contentType = res.headers.get('content-type') || '';
+    const errorData = contentType.includes('application/json') ? await res.json().catch(() => ({})) : {};
     throw new Error(errorData.error?.message || `Failed to fetch Google Sheet (${res.status} ${res.statusText})`);
   }
 
-  const data = await res.json();
+  const data = await parseResponseJson(res);
   return {
     id: data.spreadsheetId,
     title: data.properties?.title || 'Untitled Spreadsheet',
@@ -172,11 +184,12 @@ export async function fetchSheetValues(spreadsheetId: string, range: string): Pr
   });
 
   if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
+    const contentType = res.headers.get('content-type') || '';
+    const errorData = contentType.includes('application/json') ? await res.json().catch(() => ({})) : {};
     throw new Error(errorData.error?.message || `Failed to read cells from Google Sheet (${res.status})`);
   }
 
-  const data = await res.json();
+  const data = await parseResponseJson(res);
   return data.values || [];
 }
 
@@ -283,11 +296,12 @@ export async function createGoogleSpreadsheet(
   });
 
   if (!createRes.ok) {
-    const err = await createRes.json().catch(() => ({}));
+    const contentType = createRes.headers.get('content-type') || '';
+    const err = contentType.includes('application/json') ? await createRes.json().catch(() => ({})) : {};
     throw new Error(err.error?.message || 'Failed to create Google Spreadsheet.');
   }
 
-  const sheetData = await createRes.json();
+  const sheetData = await parseResponseJson(createRes);
   const spreadsheetId = sheetData.spreadsheetId;
 
   // 2. Append rows to the sheet
@@ -420,11 +434,12 @@ export async function listGoogleDriveFiles(filter?: 'spreadsheets' | 'all'): Pro
   });
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
+    const contentType = res.headers.get('content-type') || '';
+    const err = contentType.includes('application/json') ? await res.json().catch(() => ({})) : {};
     throw new Error(err.error?.message || `Failed to list files from Google Drive (${res.status})`);
   }
 
-  const data = await res.json();
+  const data = await parseResponseJson(res);
   return data.files || [];
 }
 
@@ -475,11 +490,12 @@ export async function backupExamToDrive(
   });
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
+    const contentType = res.headers.get('content-type') || '';
+    const err = contentType.includes('application/json') ? await res.json().catch(() => ({})) : {};
     throw new Error(err.error?.message || 'Failed to upload exam backup to Google Drive.');
   }
 
-  const data = await res.json();
+  const data = await parseResponseJson(res);
   return {
     fileId: data.id,
     name: data.name,
@@ -548,11 +564,12 @@ export async function sendGmailMessage(payload: SendEmailPayload): Promise<{ id:
   });
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
+    const contentType = res.headers.get('content-type') || '';
+    const err = contentType.includes('application/json') ? await res.json().catch(() => ({})) : {};
     throw new Error(err.error?.message || `Failed to send email via Gmail API (${res.status})`);
   }
 
-  return res.json();
+  return parseResponseJson(res);
 }
 
 /**

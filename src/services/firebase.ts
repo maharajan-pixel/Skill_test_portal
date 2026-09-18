@@ -777,16 +777,15 @@ export async function authenticateUser(role: 'STUDENT' | 'TEACHER' | 'ADMIN', us
     if (role === 'ADMIN') {
       const validAdmins = ['admin', 'admin@spicschool.com', 'maharajan@spicschool.com', 'maharajan'];
       const isAdminUser = validAdmins.includes(cleanLowerId);
-      const validPasswords = ['SpicAdmin@2026', 'admin123', 'admin'];
 
-      if (isAdminUser && validPasswords.includes(cleanPass)) {
+      if (isAdminUser && cleanPass === 'SpicAdmin@2026') {
         return {
           role: 'ADMIN',
           adminId: cleanLowerId.includes('maharajan') ? 'ADM_MAHARAJAN' : 'ADM_MASTER',
           name: cleanLowerId.includes('maharajan') ? 'Mr. Maharajan (Administrator)' : 'Master Administrator'
         };
       }
-      throw new Error('Invalid Administrator credentials. (Default ID: admin, Password: SpicAdmin@2026)');
+      throw new Error('Invalid Administrator credentials. Please verify your ID and password.');
     }
 
     if (role === 'TEACHER') {
@@ -813,7 +812,7 @@ export async function authenticateUser(role: 'STUDENT' | 'TEACHER' | 'ADMIN', us
         };
       }
 
-      throw new Error('Invalid Teacher credentials. (Use your @spicschool.com email and Password: Teacher@2026)');
+      throw new Error('Invalid Teacher credentials. Please verify your school email and password.');
     }
 
     throw new Error('Invalid credentials.');

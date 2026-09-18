@@ -575,7 +575,7 @@ export async function verifyStaffCredentials(
     const isAdminUser = validAdmins.includes(cleanId) || envAdmins.includes(cleanId);
     const expectedPass = process.env.ADMIN_PASSWORD || 'SpicAdmin@2026';
 
-    if (isAdminUser && (cleanPass === expectedPass || cleanPass === 'admin123')) {
+    if (isAdminUser && cleanPass === expectedPass) {
       return {
         role: 'ADMIN',
         adminId: cleanId.includes('maharajan') ? 'ADM_MAHARAJAN' : 'ADM_MASTER',

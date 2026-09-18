@@ -1,6 +1,11 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Administrator accounts and credentials: strictly server-only
+    match /admins/{adminId} {
+      allow read, write: if false;
+    }
+
     // School Roster (Student credentials, DOBs, Exam numbers): strictly server-only
     match /roster/{userId} {
       allow read, write: if false;

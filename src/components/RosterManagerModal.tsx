@@ -929,8 +929,8 @@ teacher.biology@spicschool.com\tMrs. P. Subbulakshmi\tTeacher@2026\t10 A, 10 B`)
                   </p>
                   <ul className="list-disc pl-4 space-y-1 text-slate-600 font-medium">
                     <li><strong>Username:</strong> Your full email address (e.g. <code>maharajan@spicschool.com</code>).</li>
-                    <li><strong>Standard Staff Password:</strong> <code>Teacher@2026</code> (or your customized password).</li>
-                    <li><strong>Automatic Provisioning:</strong> Any staff logging in with valid <code>@spicschool.com</code> credentials is authenticated and granted access to view their classes.</li>
+                    <li><strong>Standard Staff Password:</strong> As configured for your account, or sign in directly with Google SSO.</li>
+                    <li><strong>Automatic Provisioning:</strong> Any faculty logging in with a verified <code>@spicschool.com</code> account is authenticated and granted class access.</li>
                   </ul>
                 </div>
 
@@ -950,9 +950,9 @@ teacher.biology@spicschool.com\tMrs. P. Subbulakshmi\tTeacher@2026\t10 A, 10 B`)
                 </div>
               </div>
 
-              <div className="bg-amber-100/70 border border-amber-300 p-3.5 rounded-xl text-amber-900 font-medium">
+              <div className="bg-indigo-50 border border-indigo-200 p-3.5 rounded-xl text-indigo-950 font-medium">
                 <strong className="block mb-1 font-black uppercase text-[11px]">Administrator Access:</strong>
-                Use <code>admin</code> or <code>maharajan@spicschool.com</code> with password <code>SpicAdmin@2026</code> to access the Executive Control Room.
+                Use your registered Administrator User ID and secure password (or Google SSO) to access the Executive Control Room.
               </div>
             </div>
           )}

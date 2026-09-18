@@ -18,7 +18,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [showCredsGuide, setShowCredsGuide] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,9 +31,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     } catch (err: any) {
       const rawMsg = err?.message || '';
       if (rawMsg.includes('Unexpected token') || rawMsg.includes('is not valid JSON') || rawMsg.includes('<!DOCTYPE') || rawMsg.includes('<html')) {
-        setErrorMessage('Server connection fallback active. Please verify your credentials or click "Sign In as Mr. Maharajan (Admin)" below.');
+        setErrorMessage('Unable to connect to authentication server. Please verify your credentials and try again.');
       } else {
-        setErrorMessage(rawMsg || 'Authentication failed. Please verify credentials.');
+        setErrorMessage(rawMsg || 'Authentication failed. Please verify your credentials.');
       }
     } finally {
       setIsLoading(false);
@@ -52,7 +51,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     } catch (err: any) {
       console.warn("Google SSO Notice:", err);
       if (err.code === 'auth/unauthorized-domain' || (err.message && err.message.includes('unauthorized-domain'))) {
-        setErrorMessage('Firebase Domain Authorization: "skilltest.spicschool.com" has not yet been added to Firebase Console > Authentication > Settings > Authorized domains. Click below to sign in directly, or add skilltest.spicschool.com to Firebase to enable Google popup.');
+        setErrorMessage('Domain Authorization pending: Ensure "skilltest.spicschool.com" and "auth.spicschool.com" are added to Firebase Console > Authentication > Settings > Authorized domains.');
         return;
       }
       if (
@@ -62,8 +61,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         (err.message && err.message.toLowerCase().includes('popup'))
       ) {
         const promptEmail = window.prompt(
-          "Google Sign-In Popup was blocked or closed.\nEnter your Google Account Email (e.g. maharajan@spicschool.com):",
-          'maharajan@spicschool.com'
+          "Google Sign-In Popup was blocked or closed.\nEnter your registered Google Account Email (e.g. yourname@spicschool.com):"
         );
         if (promptEmail && promptEmail.trim()) {
           try {
@@ -80,26 +78,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleDirectMaharajanLogin = async () => {
-    setIsLoading(true);
-    setErrorMessage('');
-    try {
-      const user = await authenticateUser('ADMIN', 'maharajan@spicschool.com', 'SpicAdmin@2026');
-      onLoginSuccess(user);
-    } catch (e: any) {
-      setErrorMessage(e.message || 'Direct login failed');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fillCredentials = (r: UserRole, id: string, pass: string) => {
-    setRole(r);
-    setUserId(id);
-    setPassword(pass);
-    setErrorMessage('');
   };
 
   return (
@@ -130,21 +108,21 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         {role === 'TEACHER' && (
           <div className="mb-4 p-3 bg-indigo-50 border border-indigo-200 rounded-2xl text-[11px] text-indigo-950 font-bold flex items-center justify-between">
             <div>
-              <span>🏫 <strong>Faculty Portal:</strong> Sign in with Google or your <code>@spicschool.com</code> account.</span>
+              <span>🏫 <strong>Faculty Portal:</strong> Sign in with your school email </span>
             </div>
           </div>
         )}
         {role === 'ADMIN' && (
           <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-2xl text-[11px] text-purple-950 font-bold flex items-center justify-between">
             <div>
-              <span>🛡️ <strong>Master Administrator:</strong> Sign in with Google or administrator credentials.</span>
+              
             </div>
           </div>
         )}
         {role === 'STUDENT' && (
           <div className="mb-4 p-3 bg-slate-100 border border-slate-200 rounded-2xl text-[11px] text-slate-800 font-bold flex items-center justify-between">
             <div>
-              <span>🎓 <strong>Student Examination Login:</strong> Enter your Exam Number and Password (Date of Birth: <code>DD/MM/YYYY</code>).</span>
+              <span>🎓 <strong>Student Examination Login:</strong> Enter your Admission Number and Password (Date of Birth: <code>DD/MM/YYYY</code>).</span>
             </div>
           </div>
         )}
@@ -248,7 +226,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
               required
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
-              placeholder={role === 'STUDENT' ? 'e.g. 6105' : role === 'TEACHER' ? 'e.g. maharajan@spicschool.com' : 'e.g. admin'}
+              placeholder={role === 'STUDENT' ? 'e.g. S26105' : role === 'TEACHER' ? 'e.g. teacher@spicschool.com' : 'e.g. administrator'}
               className="w-full border-2 border-slate-200 rounded-xl p-3 sm:p-3.5 bg-slate-50 font-bold text-slate-900 focus:border-indigo-600 focus:bg-white outline-none transition text-sm"
             />
           </div>
@@ -289,25 +267,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                 <span className="text-base">⚠️</span>
                 <span>{errorMessage}</span>
               </div>
-              {errorMessage.includes('skilltest.spicschool.com') && (
-                <div className="mt-3 pt-2.5 border-t border-rose-200 flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleDirectMaharajanLogin}
-                    className="bg-indigo-700 hover:bg-indigo-800 text-white px-3.5 py-2 rounded-lg text-xs font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
-                  >
-                    <span>🛡️</span>
-                    <span>Sign In as Mr. Maharajan (Admin)</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => fillCredentials('ADMIN', 'admin', 'SpicAdmin@2026')}
-                    className="bg-white border border-rose-300 text-rose-800 hover:bg-rose-100 px-3 py-2 rounded-lg text-xs font-bold transition cursor-pointer"
-                  >
-                    Fill Master Admin ID
-                  </button>
-                </div>
-              )}
             </div>
           )}
 
@@ -322,93 +281,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
             <span>{isLoading ? 'AUTHENTICATING...' : 'AUTHENTICATE & ENTER'}</span>
           </button>
         </form>
-
-        {/* School Credentials & Firebase Guide Card */}
-        <div className="mt-6 bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4 shadow-xs">
-          <button
-            type="button"
-            onClick={() => setShowCredsGuide(!showCredsGuide)}
-            className="w-full flex items-center justify-between text-left cursor-pointer"
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-base">🔑</span>
-              <span className="text-xs sm:text-sm font-black text-amber-950 uppercase tracking-wide">
-                Default Credentials & Firebase Console Guide
-              </span>
-            </div>
-            <span className="text-xs font-bold text-amber-800 bg-amber-200/60 px-2 py-0.5 rounded-md">
-              {showCredsGuide ? 'Hide ▲' : 'Show Details ▼'}
-            </span>
-          </button>
-
-          {showCredsGuide && (
-            <div className="mt-4 pt-3 border-t border-amber-200/80 space-y-4 text-xs text-amber-950">
-              {/* Quick autofill buttons */}
-              <div>
-                <p className="font-black text-[11px] uppercase tracking-wider text-amber-900 mb-2">
-                  One-Click Quick Login:
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => fillCredentials('ADMIN', 'admin', 'SpicAdmin@2026')}
-                    className="p-2.5 bg-white border border-amber-300 rounded-xl hover:bg-amber-100/60 text-left transition cursor-pointer"
-                  >
-                    <div className="font-bold text-indigo-900">🛡️ Admin Account</div>
-                    <div className="text-[11px] text-slate-600 font-mono">admin / SpicAdmin@2026</div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => fillCredentials('TEACHER', 'saravanan.sci@spicschool.com', 'Teacher@2026')}
-                    className="p-2.5 bg-white border border-amber-300 rounded-xl hover:bg-amber-100/60 text-left transition cursor-pointer"
-                  >
-                    <div className="font-bold text-emerald-900">👩‍🏫 Teacher Account</div>
-                    <div className="text-[11px] text-slate-600 font-mono">saravanan.sci / Teacher@2026</div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => fillCredentials('STUDENT', '6105', '12/07/2015')}
-                    className="p-2.5 bg-white border border-amber-300 rounded-xl hover:bg-amber-100/60 text-left transition cursor-pointer"
-                  >
-                    <div className="font-bold text-amber-900">🎓 Student Account</div>
-                    <div className="text-[11px] text-slate-600 font-mono">6105 / 12/07/2015</div>
-                  </button>
-                </div>
-              </div>
-
-              {/* Where to find in Firebase */}
-              <div className="bg-white/80 p-3 rounded-xl border border-amber-200 space-y-1.5">
-                <p className="font-black text-[11px] uppercase tracking-wider text-indigo-950">
-                  📁 Where to find usernames & passwords in Firebase Console:
-                </p>
-                <p className="text-slate-700 leading-relaxed">
-                  In Firebase Console, your data is stored in the <strong>Firestore Database</strong> under database <code>ai-studio-spicnagarassessm-9a4f909e-811d-4fd5-88be-364cd90615a6</code>:
-                </p>
-                <ul className="list-disc list-inside space-y-1 text-slate-700 font-medium pl-1">
-                  <li><strong>Collection <code>admins</code></strong>: Master admin & administrator accounts with their passwords.</li>
-                  <li><strong>Collection <code>faculty_roster</code></strong>: All teacher email addresses and passwords.</li>
-                  <li><strong>Collection <code>roster</code></strong>: Registered students with their Exam No, Name, and DOB password.</li>
-                </ul>
-              </div>
-
-              {/* Google Sign-In on Custom Domain fix */}
-              <div className="bg-indigo-50/80 p-3 rounded-xl border border-indigo-200 space-y-1.5 text-indigo-950">
-                <p className="font-black text-[11px] uppercase tracking-wider text-indigo-900">
-                  🌐 How to enable Google Sign-In on skilltest.spicschool.com:
-                </p>
-                <ol className="list-decimal list-inside space-y-1 text-indigo-900/90 font-medium pl-1">
-                  <li>Open <strong>Firebase Console &gt; Authentication</strong>.</li>
-                  <li>Click on the <strong>Settings</strong> tab at the top.</li>
-                  <li>Scroll to <strong>Authorized domains</strong> and click <strong>Add domain</strong>.</li>
-                  <li>Enter <code>skilltest.spicschool.com</code> and click <strong>Save</strong>.</li>
-                </ol>
-                <p className="text-[11px] text-indigo-700 mt-1">
-                  Once saved, Google popup sign-in will work immediately on your school domain without errors!
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
       </div>
 
       {/* Step-by-Step Student Guide on Login Screen (Matching original design) */}

@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { TeacherUser, ExamDocument, SubmissionDocument } from '../types';
+import { getLocalTeachers } from '../services/firebase';
 import { 
   BarChart3, 
   Users, 
@@ -33,6 +34,39 @@ interface TeacherDashboardProps {
   onOpenWorkspace?: (tab?: 'SHEETS' | 'DRIVE' | 'GMAIL') => void;
 }
 
+/**
+ * Normalizes class representation for strict academic matching (e.g., 'VI A', 'VI-A', '6 A')
+ */
+function normalizeClassKey(cls: string = ''): string {
+  if (!cls) return '';
+  const s = cls.trim().toUpperCase().replace(/[-_]/g, ' ').replace(/\s+/g, ' ');
+  const romanMap: Record<string, string> = {
+    'VI': '6',
+    'VII': '7',
+    'VIII': '8',
+    'IX': '9',
+    'X': '10',
+    'XI': '11',
+    'XII': '12'
+  };
+  const parts = s.split(' ');
+  if (parts.length >= 2) {
+    const [grade, sec] = parts;
+    const normalizedGrade = romanMap[grade] || grade;
+    return `${normalizedGrade} ${sec}`;
+  }
+  return s;
+}
+
+/**
+ * Checks if two class labels match semantically
+ */
+function matchClass(c1: string = '', c2: string = ''): boolean {
+  if (!c1 || !c2) return false;
+  if (c1.trim().toLowerCase() === c2.trim().toLowerCase()) return true;
+  return normalizeClassKey(c1) === normalizeClassKey(c2);
+}
+
 export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   user,
   exams,
@@ -49,27 +83,61 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   const [classFilter, setClassFilter] = useState<string>('ALL');
   const [viewMode, setViewMode] = useState<'TABLE' | 'CARDS'>('TABLE');
 
-  // Filter exams managed by this teacher and ensure unique items
+  // Resolve the teacher's designated assigned classes (from user state or faculty roster)
+  const teacherAssignedClasses = useMemo(() => {
+    if (user.assignedClasses && user.assignedClasses.length > 0) {
+      return user.assignedClasses;
+    }
+    try {
+      const teachers = getLocalTeachers();
+      const matched = teachers.find(t => t.email.toLowerCase() === user.email.toLowerCase());
+      if (matched && matched.assigned && matched.assigned.length > 0) {
+        return matched.assigned;
+      }
+    } catch (e) {}
+    return [];
+  }, [user.assignedClasses, user.email]);
+
+  // Filter exams strictly to this teacher's respective classes (or explicit allowedTeachers)
   const managedExams = useMemo(() => {
     const seen = new Set<string>();
+    const userEmailLower = user.email.toLowerCase();
+
     return exams.filter((e, idx) => {
       const key = e.id || e.code || `exam-${idx}`;
       if (seen.has(key)) return false;
       seen.add(key);
 
-      if (!e.allowedTeachers || e.allowedTeachers.length === 0) return true;
-      return e.allowedTeachers.some(email => email.toLowerCase() === user.email.toLowerCase());
-    });
-  }, [exams, user.email]);
+      const isExplicitTeacher = Array.isArray(e.allowedTeachers) && e.allowedTeachers.some(
+        em => em.toLowerCase() === userEmailLower
+      );
 
-  // Extract distinct classes in this teacher's portfolio
+      // If this teacher has assigned classes, only include exams for their respective classes (or explicit teacher assignment)
+      if (teacherAssignedClasses.length > 0) {
+        const matchesAssigned = teacherAssignedClasses.some(ac => matchClass(ac, e.classSec));
+        return matchesAssigned || isExplicitTeacher;
+      }
+
+      // If no assigned classes exist, only show exams where explicitly added as proctor/allowed teacher
+      return isExplicitTeacher;
+    });
+  }, [exams, user.email, teacherAssignedClasses]);
+
+  // Extract distinct classes strictly in this teacher's portfolio
   const teacherClasses = useMemo(() => {
     const set = new Set<string>();
+    // Seed with teacher's respective assigned classes
+    teacherAssignedClasses.forEach(c => {
+      if (c && c.trim()) set.add(c.trim());
+    });
+    // Also include classes of managed exams
     managedExams.forEach(e => {
-      if (e.classSec) set.add(e.classSec.trim());
+      if (e.classSec && e.classSec.trim()) {
+        set.add(e.classSec.trim());
+      }
     });
     return Array.from(set).sort();
-  }, [managedExams]);
+  }, [teacherAssignedClasses, managedExams]);
 
   // Submission count map for fast lookup
   const submissionCounts = useMemo(() => {
@@ -97,8 +165,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
       if (statusFilter === 'ACTIVE' && ex.status !== 'ACTIVE') return false;
       if (statusFilter === 'CLOSED' && ex.status !== 'CLOSED') return false;
 
-      // 2. Class Filter
-      if (classFilter !== 'ALL' && ex.classSec.trim().toLowerCase() !== classFilter.toLowerCase()) {
+      // 2. Class Filter (strict semantic comparison)
+      if (classFilter !== 'ALL' && !matchClass(ex.classSec, classFilter)) {
         return false;
       }
 
@@ -107,8 +175,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
         const matchTitle = ex.title?.toLowerCase().includes(q);
         const matchSubject = ex.subject?.toLowerCase().includes(q);
         const matchCode = ex.code?.toLowerCase().includes(q);
-        const matchClass = ex.classSec?.toLowerCase().includes(q);
-        if (!matchTitle && !matchSubject && !matchCode && !matchClass) return false;
+        const matchClassSec = ex.classSec?.toLowerCase().includes(q);
+        if (!matchTitle && !matchSubject && !matchCode && !matchClassSec) return false;
       }
 
       return true;
@@ -134,17 +202,17 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
               Academic Staff Portal · Assessment Registry
             </div>
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white mt-0.5">
-              Teacher Command Dashboard
+              Teacher Dashboard
             </h1>
             <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-slate-300">
               <span className="font-semibold text-white">{user.name}</span>
               <span className="text-slate-500">·</span>
               <span className="font-mono text-slate-300">{user.email}</span>
-              {user.assignedClasses && user.assignedClasses.length > 0 && (
+              {teacherAssignedClasses.length > 0 && (
                 <>
                   <span className="text-slate-500">·</span>
-                  <span className="bg-indigo-900/60 text-indigo-200 border border-indigo-700/60 px-2 py-0.5 rounded text-[11px] font-mono">
-                    Classes: {user.assignedClasses.join(', ')}
+                  <span className="bg-indigo-900/60 text-indigo-200 border border-indigo-700/60 px-2.5 py-0.5 rounded text-[11px] font-mono">
+                    Respective Classes: {teacherAssignedClasses.join(', ')}
                   </span>
                 </>
               )}
@@ -246,14 +314,16 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-xs font-medium">Portfolio Classes</span>
+            <span className="text-xs font-medium">Respective Classes</span>
             <BookOpen className="w-4 h-4 text-amber-600" />
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-bold font-mono tabular-nums text-slate-900">
               {teacherClasses.length}
             </span>
-            <span className="text-xs text-slate-500 font-medium">classes monitored</span>
+            <span className="text-xs text-slate-500 font-medium">
+              {teacherClasses.length === 1 ? 'class assigned' : 'classes assigned'}
+            </span>
           </div>
         </div>
       </div>
@@ -286,7 +356,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
           {/* Filters and View Switcher */}
           <div className="flex flex-wrap items-center gap-2.5">
             {/* Class Filter */}
-            {teacherClasses.length > 0 && (
+            {teacherClasses.length > 1 ? (
               <div className="flex items-center gap-1.5">
                 <span className="text-xs font-medium text-slate-500 whitespace-nowrap">Class:</span>
                 <select
@@ -294,7 +364,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                   onChange={(e) => setClassFilter(e.target.value)}
                   className="text-xs font-medium bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-700 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
                 >
-                  <option value="ALL">All Classes ({managedExams.length})</option>
+                  <option value="ALL">All Respective Classes ({managedExams.length})</option>
                   {teacherClasses.map(cls => (
                     <option key={cls} value={cls}>
                       Class {cls}
@@ -302,7 +372,12 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                   ))}
                 </select>
               </div>
-            )}
+            ) : teacherClasses.length === 1 ? (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 border border-indigo-200/80 rounded-lg text-xs">
+                <span className="text-slate-500 font-medium">Assigned Class:</span>
+                <span className="font-mono font-bold text-indigo-900">Class {teacherClasses[0]}</span>
+              </div>
+            ) : null}
 
             {/* Status Segmented Control */}
             <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg border border-slate-200">
@@ -390,7 +465,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
           </h3>
           <p className="text-xs text-slate-500 max-w-md mx-auto mb-4">
             {managedExams.length === 0
-              ? `No examination portfolios are assigned to ${user.email}. Check with the examination controller or import a new paper.`
+              ? `No examination portfolios found for ${user.email} in assigned classes (${teacherAssignedClasses.join(', ') || 'No classes assigned'}). Check with the examination controller or import a new paper.`
               : 'No examination papers match the current filters or search term.'}
           </p>
           {(searchQuery || statusFilter !== 'ALL' || classFilter !== 'ALL') && (

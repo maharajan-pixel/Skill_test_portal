@@ -103,7 +103,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <span className="truncate max-w-[130px] sm:max-w-[180px]">{user.name}</span>
                   </div>
                   <div className="text-[9px] font-mono text-amber-400 uppercase">
-                    {user.role === 'STUDENT' ? `Class ${(user as any).classSec}` : user.role}
+                    {user.role === 'STUDENT' 
+                      ? `Class ${(user as any).classSec}` 
+                      : user.role === 'TEACHER' && (user as any).assignedClasses?.length
+                        ? (user as any).assignedClasses.length <= 2 
+                          ? `Class ${(user as any).assignedClasses.join(', ')}`
+                          : `Faculty (${(user as any).assignedClasses.length} Classes)`
+                        : user.role}
                   </div>
                 </div>
 

@@ -281,3 +281,30 @@ examRouter.post('/:examId/toggle-score-status', requireTeacherOrAdmin, async (re
     res.status(500).json({ error: 'Failed to toggle score status.' });
   }
 });
+
+/**
+ * POST /api/exams/sync-router
+ * Synchronize exams with the latest School Exam Router CSV (AY 2026-27)
+ */
+examRouter.post('/sync-router', requireTeacherOrAdmin, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { csvContent } = req.body || {};
+    if (csvContent && typeof csvContent === 'string' && csvContent.trim().length > 0) {
+      const fs = await import('fs');
+      const path = await import('path');
+      const csvPath = path.resolve(process.cwd(), 'src/data/raw_exams.csv');
+      fs.writeFileSync(csvPath, csvContent, 'utf-8');
+
+      // Execute build script to regenerate schoolData.ts
+      const { execSync } = await import('child_process');
+      execSync('node scripts/build_school_data.cjs', { cwd: process.cwd() });
+    }
+
+    const exams = await getAllServerExams();
+    res.json({ success: true, count: exams.length, exams });
+  } catch (err: any) {
+    console.error('[examRoutes] Error synchronizing exam router:', err);
+    res.status(500).json({ error: 'Failed to synchronize exam router: ' + err.message });
+  }
+});
+

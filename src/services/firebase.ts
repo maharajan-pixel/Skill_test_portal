@@ -67,10 +67,10 @@ export const DEFAULT_EXAMS: ExamDocument[] = SCHOOL_EXAM_DOCUMENTS;
 const INITIAL_SUBMISSIONS: SubmissionDocument[] = SCHOOL_ROSTER_SUBMISSIONS;
 
 // In-memory / local storage sync helper
-const STORAGE_KEY_EXAMS = 'spic_exams_cache_v3';
-const STORAGE_KEY_SUBS = 'spic_subs_cache_v3';
-const STORAGE_KEY_STUDENTS = 'spic_students_cache_v3';
-const STORAGE_KEY_TEACHERS = 'spic_teachers_cache_v3';
+const STORAGE_KEY_EXAMS = 'spic_exams_cache_v4';
+const STORAGE_KEY_SUBS = 'spic_subs_cache_v4';
+const STORAGE_KEY_STUDENTS = 'spic_students_cache_v4';
+const STORAGE_KEY_TEACHERS = 'spic_teachers_cache_v4';
 
 /**
  * Universal safe JSON fetch helper.
@@ -143,18 +143,24 @@ export function saveLocalTeachers(teachers: TeacherRecord[]) {
 function getLocalExams(): ExamDocument[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_EXAMS);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        const seen = new Set<string>();
-        return parsed.filter((e: ExamDocument) => {
-          const key = e.id || e.code;
-          if (!key || seen.has(key)) return false;
-          seen.add(key);
-          return true;
-        });
+    const existing: ExamDocument[] = raw ? JSON.parse(raw) : [];
+    const map = new Map<string, ExamDocument>();
+    // Seed with all DEFAULT_EXAMS (all 54 exams from the router)
+    for (const e of DEFAULT_EXAMS) {
+      const key = e.id || e.code;
+      if (key) map.set(key, e);
+    }
+    // Overlay user overrides or local status changes
+    if (Array.isArray(existing)) {
+      for (const e of existing) {
+        const key = e.id || e.code;
+        if (key) {
+          const def = map.get(key);
+          map.set(key, { ...def, ...e });
+        }
       }
     }
+    return Array.from(map.values());
   } catch (e) {}
   localStorage.setItem(STORAGE_KEY_EXAMS, JSON.stringify(DEFAULT_EXAMS));
   return DEFAULT_EXAMS;

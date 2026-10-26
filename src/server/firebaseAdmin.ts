@@ -426,26 +426,43 @@ export async function getAllServerSubmissions(): Promise<SubmissionDocument[]> {
 export async function getAllServerExams(): Promise<ExamDocument[]> {
   try {
     const snap = await serverDb.collection('exams').get();
+    const firestoreMap = new Map<string, any>();
     if (!snap.empty) {
-      const exams: ExamDocument[] = [];
-      const seen = new Set<string>();
       snap.forEach(d => {
         const data = d.data();
         const examId = data.id || d.id;
-        if (!seen.has(examId)) {
-          seen.add(examId);
-          exams.push({ ...data, id: examId } as ExamDocument);
-        }
+        if (examId) firestoreMap.set(examId, { ...data, id: examId });
       });
-      // Merge with school completed exams so all 51 completed tests are accessible
-      for (const ex of SCHOOL_EXAM_DOCUMENTS) {
-        if (!seen.has(ex.id)) {
-          seen.add(ex.id);
-          exams.push(ex);
-        }
-      }
-      return exams;
     }
+
+    const mergedExams: ExamDocument[] = [];
+    const seen = new Set<string>();
+
+    // 1. Process all authoritative school router exams first
+    for (const ex of SCHOOL_EXAM_DOCUMENTS) {
+      seen.add(ex.id);
+      const fsDoc = firestoreMap.get(ex.id);
+      if (fsDoc) {
+        // Overlay runtime status overrides from Firestore
+        mergedExams.push({
+          ...ex,
+          status: fsDoc.status || ex.status,
+          scoreStatus: fsDoc.scoreStatus || ex.scoreStatus
+        });
+      } else {
+        mergedExams.push(ex);
+      }
+    }
+
+    // 2. Add any custom exams created in Firestore that aren't in the default router
+    for (const [id, doc] of firestoreMap.entries()) {
+      if (!seen.has(id)) {
+        seen.add(id);
+        mergedExams.push(doc as ExamDocument);
+      }
+    }
+
+    return mergedExams;
   } catch (err) {
     console.warn('[serverDb] Notice reading all exams from Firestore:', err);
   }
@@ -479,6 +496,10 @@ export async function saveServerExam(exam: ExamDocument): Promise<void> {
  * Update exam status
  */
 export async function updateServerExamStatus(examId: string, status: 'ACTIVE' | 'CLOSED'): Promise<void> {
+  const memEx = SCHOOL_EXAM_DOCUMENTS.find(e => e.id === examId);
+  if (memEx) {
+    memEx.status = status;
+  }
   try {
     await serverDb.collection('exams').doc(examId).set({
       status,
@@ -501,6 +522,10 @@ export async function updateServerExamStatus(examId: string, status: 'ACTIVE' | 
  * Update score status
  */
 export async function updateServerScoreStatus(examId: string, scoreStatus: 'AUTO' | 'RELEASED'): Promise<void> {
+  const memEx = SCHOOL_EXAM_DOCUMENTS.find(e => e.id === examId);
+  if (memEx) {
+    memEx.scoreStatus = scoreStatus;
+  }
   try {
     await serverDb.collection('exams').doc(examId).set({
       scoreStatus,

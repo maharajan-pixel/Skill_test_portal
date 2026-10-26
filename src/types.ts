@@ -140,6 +140,7 @@ export interface ActiveStudentExamCard {
   qCount: number;
   examMins: number;
   status: 'ACTIVE' | 'CLOSED';
+  submission?: SubmissionDocument;
 }
 
 export interface KioskQuestionState extends StudentQuestion {

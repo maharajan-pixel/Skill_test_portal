@@ -71,7 +71,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
           unlockTime,
           qCount: ex.qCount,
           examMins: ex.examMins,
-          status: ex.status
+          status: ex.status,
+          submission: sub
         };
       }
 
@@ -207,6 +208,24 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                       <span className="text-2xl font-black text-indigo-700 font-mono">
                         {card.score}
                       </span>
+                      {card.submission && (
+                        <div className="flex flex-wrap items-center justify-center gap-1.5 mt-3 pt-2.5 border-t border-slate-100 text-[11px] font-bold">
+                          <span className="text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
+                            ✓ {card.submission.correct} Correct
+                          </span>
+                          <span className="text-rose-800 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200/60">
+                            ✗ {card.submission.wrong} Wrong
+                          </span>
+                          {card.submission.skipped > 0 && (
+                            <span className="text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/60">
+                              ⊘ {card.submission.skipped} Skipped
+                            </span>
+                          )}
+                          <span className="text-slate-600 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-200/60 font-mono">
+                            ⏱ {card.submission.timeUsed}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

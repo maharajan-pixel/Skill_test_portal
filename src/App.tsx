@@ -20,7 +20,8 @@ import {
   toggleScoreStatusInDb, 
   submitExamAttempt,
   seedInitialFirestoreData,
-  saveExamToFirestore
+  saveExamToFirestore,
+  safeFetchJson
 } from './services/firebase';
 import { Navbar } from './components/Navbar';
 import { LoginView } from './components/LoginView';
@@ -203,12 +204,45 @@ export default function App() {
     setCurrentView('LOGIN');
   };
 
-  // Manual Live Refresh
-  const handleRefresh = () => {
+  // Manual Live Refresh - performs authoritative real-time synchronization with server
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    setTimeout(() => {
+    try {
+      const [examsRes, subsRes] = await Promise.all([
+        safeFetchJson<{ exams?: ExamDocument[] }>('/api/exams'),
+        safeFetchJson<{ submissions?: SubmissionDocument[] }>('/api/submissions')
+      ]);
+
+      if (examsRes.ok && examsRes.isJson && examsRes.data?.exams) {
+        const seen = new Set<string>();
+        const deduped: ExamDocument[] = [];
+        for (const e of examsRes.data.exams) {
+          const key = e.id || e.code;
+          if (key && !seen.has(key)) {
+            seen.add(key);
+            deduped.push(e);
+          }
+        }
+        setExams(deduped);
+      }
+
+      if (subsRes.ok && subsRes.isJson && subsRes.data?.submissions) {
+        const seen = new Set<string>();
+        const deduped: SubmissionDocument[] = [];
+        for (const s of subsRes.data.submissions) {
+          const key = s.id || `${s.examId}-${s.admnNo}`;
+          if (key && !seen.has(key)) {
+            seen.add(key);
+            deduped.push(s);
+          }
+        }
+        setSubmissions(deduped);
+      }
+    } catch (err) {
+      console.warn("Live sync refresh warning:", err);
+    } finally {
       setIsRefreshing(false);
-    }, 800);
+    }
   };
 
   // Start Exam (Student) - Initiate authoritative server session and sanitize payload

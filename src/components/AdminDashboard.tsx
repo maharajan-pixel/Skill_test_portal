@@ -46,6 +46,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onOpenWorkspace
 }) => {
   const [updatingExamId, setUpdatingExamId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'CLOSED'>('ALL');
+  const [classFilter, setClassFilter] = useState<string>('ALL');
+  const [isSyncingRouter, setIsSyncingRouter] = useState(false);
+  const [routerMessage, setRouterMessage] = useState<string | null>(null);
+  const routerFileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Ensure unique exam items
   const uniqueExams = React.useMemo(() => {
@@ -57,6 +62,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       return true;
     });
   }, [exams]);
+
+  // Filtered exams according to status and class filter
+  const filteredExams = React.useMemo(() => {
+    return uniqueExams.filter(e => {
+      if (statusFilter === 'ACTIVE' && e.status !== 'ACTIVE') return false;
+      if (statusFilter === 'CLOSED' && e.status !== 'CLOSED') return false;
+      if (classFilter !== 'ALL' && !e.classSec.startsWith(classFilter)) return false;
+      return true;
+    });
+  }, [uniqueExams, statusFilter, classFilter]);
+
+  const activeCount = uniqueExams.filter(e => e.status === 'ACTIVE').length;
+  const closedCount = uniqueExams.filter(e => e.status === 'CLOSED').length;
 
   const handleStatusToggle = async (examId: string, status: 'ACTIVE' | 'CLOSED') => {
     setUpdatingExamId(examId);
@@ -73,6 +91,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       await onToggleScoreStatus(examId, scoreStatus);
     } finally {
       setUpdatingExamId(null);
+    }
+  };
+
+  const handleRouterUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsSyncingRouter(true);
+    setRouterMessage(null);
+    try {
+      const text = await file.text();
+      const res = await fetch('/api/exams/sync-router', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ csvContent: text })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setRouterMessage(`Successfully synced ${data.count} exams from Router file!`);
+        onRefresh();
+      } else {
+        setRouterMessage(`Router sync error: ${data.error || 'Failed to sync'}`);
+      }
+    } catch (err: any) {
+      setRouterMessage(`Failed to upload router: ${err.message}`);
+    } finally {
+      setIsSyncingRouter(false);
+      if (e.target) e.target.value = '';
     }
   };
 
@@ -144,6 +189,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <span>Export Scoreboard (CSV)</span>
           </button>
 
+          {/* Hidden File Input for School Exam Router CSV */}
+          <input
+            type="file"
+            ref={routerFileInputRef}
+            onChange={handleRouterUpload}
+            accept=".csv,text/csv"
+            className="hidden"
+          />
+
+          <button
+            id="btn-admin-sync-router"
+            onClick={() => routerFileInputRef.current?.click()}
+            disabled={isSyncingRouter}
+            className="bg-cyan-800 hover:bg-cyan-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-sm transition flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
+            title="Upload updated SCHOOL_EXAM_ROUTER CSV to sync all exam papers and statuses"
+          >
+            <FileSpreadsheet className={`w-3.5 h-3.5 text-cyan-300 ${isSyncingRouter ? 'animate-spin' : ''}`} />
+            <span>{isSyncingRouter ? 'Syncing Router...' : 'Sync Router (CSV)'}</span>
+          </button>
+
           <button
             id="btn-sync-admin"
             onClick={onRefresh}
@@ -156,19 +221,119 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
       </div>
 
+      {/* Router Status Feedback Banner */}
+      {routerMessage && (
+        <div className="mb-6 p-4 rounded-2xl bg-cyan-50 border border-cyan-200 text-cyan-900 text-xs font-bold flex justify-between items-center animate-fade-in">
+          <span>{routerMessage}</span>
+          <button 
+            onClick={() => setRouterMessage(null)}
+            className="text-cyan-700 hover:text-cyan-950 font-black ml-4"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      {/* School Exam Router Live Sync Indicator Card */}
+      <div className="mb-6 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-5 rounded-3xl border border-indigo-500/30 shadow-md">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div className="flex items-center gap-3">
+            <span className="relative flex h-3.5 w-3.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500"></span>
+            </span>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black uppercase tracking-wider text-emerald-400">
+                  School Exam Router (AY 2026-27)
+                </span>
+                <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-black px-2 py-0.5 rounded-full">
+                  SYNCHRONIZED
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 mt-0.5 font-medium">
+                Official Roster: <strong>{uniqueExams.length} Examination Portfolios</strong> &bull; 
+                <span className="text-emerald-300 font-bold ml-1">
+                  {activeCount} Active Now (Class VI Maths 27.10.2026)
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => routerFileInputRef.current?.click()}
+              className="text-[11px] font-bold bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg border border-white/20 transition flex items-center gap-1 cursor-pointer"
+            >
+              <Upload className="w-3 h-3 text-cyan-300" />
+              <span>Update Router CSV</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Global Exam Portfolios */}
       <div>
-        <div className="flex justify-between items-center mb-3">
-          <h3 className="text-xs sm:text-sm font-black text-slate-500 uppercase tracking-wider">
-            Global School Examination Portfolios
-          </h3>
-          <span className="text-xs font-mono text-slate-500 font-bold">
-            Total Papers: {exams.length}
-          </span>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
+          <div>
+            <h3 className="text-xs sm:text-sm font-black text-slate-700 uppercase tracking-wider">
+              Global School Examination Portfolios
+            </h3>
+            <span className="text-xs font-mono text-slate-500 font-bold">
+              Showing {filteredExams.length} of {uniqueExams.length} Papers
+            </span>
+          </div>
+
+          {/* Filter Pills */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold">
+              <button
+                onClick={() => setStatusFilter('ALL')}
+                className={`px-3 py-1 rounded-lg transition ${
+                  statusFilter === 'ALL' ? 'bg-white text-indigo-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                All ({uniqueExams.length})
+              </button>
+              <button
+                onClick={() => setStatusFilter('ACTIVE')}
+                className={`px-3 py-1 rounded-lg transition flex items-center gap-1 ${
+                  statusFilter === 'ACTIVE' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <span>Active</span>
+                <span className="bg-emerald-700/80 text-[10px] px-1.5 py-0.2 rounded-full font-mono">{activeCount}</span>
+              </button>
+              <button
+                onClick={() => setStatusFilter('CLOSED')}
+                className={`px-3 py-1 rounded-lg transition ${
+                  statusFilter === 'CLOSED' ? 'bg-slate-700 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Closed ({closedCount})
+              </button>
+            </div>
+
+            {/* Class Dropdown */}
+            <select
+              value={classFilter}
+              onChange={(e) => setClassFilter(e.target.value)}
+              className="bg-white border border-slate-200 text-xs font-bold text-slate-700 rounded-xl px-2.5 py-1.5 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="ALL">All Classes</option>
+              <option value="VI">Class VI</option>
+              <option value="VII">Class VII</option>
+              <option value="VIII">Class VIII</option>
+              <option value="IX">Class IX</option>
+              <option value="X">Class X</option>
+              <option value="XI">Class XI</option>
+              <option value="XII">Class XII</option>
+            </select>
+          </div>
         </div>
 
         <div className="space-y-4">
-          {uniqueExams.map((ex, idx) => {
+          {filteredExams.map((ex, idx) => {
             const examSubs = submissions.filter(s => s.examId === ex.id);
             const isActive = ex.status === 'ACTIVE';
             const isReleased = ex.scoreStatus === 'RELEASED';

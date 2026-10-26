@@ -42,6 +42,7 @@ export interface SchoolExam {
     category: string;
     text: string;
     options: Array<{ t: string; o: number }>;
+    correctAnswer?: number;
     points: number;
   }>;
 }
@@ -36313,6 +36314,810 @@ export const SCHOOL_COMPLETED_EXAMS: SchoolExam[] = [
             "o": 3
           }
         ],
+        "points": 1
+      }
+    ]
+  },
+  {
+    "id": "exam-vi-a-october-month-vi-maths-skill-test-2-52",
+    "code": "exam-vi-a-october-month-vi-maths-skill-test-2-52",
+    "title": "OCTOBER  MONTH VI - MATHS  SKILL TEST -27.10.2026",
+    "subject": "Maths",
+    "classSec": "VI A",
+    "allowedTeachers": [
+      "dharani@spicschool.com"
+    ],
+    "status": "ACTIVE",
+    "scoreStatus": "RELEASED",
+    "examMins": 10,
+    "qCount": 10,
+    "totalMarks": 10,
+    "targetUrl": "https://docs.google.com/spreadsheets/d/1LydTdNKSNf0qFsrYN5R1l0n09GvP0uu9jk_0FgND0RY/",
+    "questions": [
+      {
+        "id": "Q1",
+        "category": "MATHS",
+        "text": "Evaluate the expression: (-12) + (+25) + (-8)",
+        "options": [
+          {
+            "t": "5",
+            "o": 0
+          },
+          {
+            "t": "-5",
+            "o": 1
+          },
+          {
+            "t": "13",
+            "o": 2
+          },
+          {
+            "t": "-13",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 0,
+        "points": 1
+      },
+      {
+        "id": "Q2",
+        "category": "MATHS",
+        "text": "Which of the following numbers is the predecessor of -49?",
+        "options": [
+          {
+            "t": "-48",
+            "o": 0
+          },
+          {
+            "t": "-50",
+            "o": 1
+          },
+          {
+            "t": "50",
+            "o": 2
+          },
+          {
+            "t": "48",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 1,
+        "points": 1
+      },
+      {
+        "id": "Q3",
+        "category": "MATHS",
+        "text": "Find the equivalent fraction of 3/5 with numerator 15:",
+        "options": [
+          {
+            "t": "15/20",
+            "o": 0
+          },
+          {
+            "t": "15/25",
+            "o": 1
+          },
+          {
+            "t": "15/30",
+            "o": 2
+          },
+          {
+            "t": "9/15",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 1,
+        "points": 1
+      },
+      {
+        "id": "Q4",
+        "category": "MATHS",
+        "text": "Express 25 millimetres in centimetres (cm):",
+        "options": [
+          {
+            "t": "0.25 cm",
+            "o": 0
+          },
+          {
+            "t": "250 cm",
+            "o": 1
+          },
+          {
+            "t": "2.5 cm",
+            "o": 2
+          },
+          {
+            "t": "0.025 cm",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 2,
+        "points": 1
+      },
+      {
+        "id": "Q5",
+        "category": "MATHS",
+        "text": "The length and breadth of a rectangular field are 12 m and 8 m. What is its perimeter?",
+        "options": [
+          {
+            "t": "40 m",
+            "o": 0
+          },
+          {
+            "t": "96 m",
+            "o": 1
+          },
+          {
+            "t": "20 m",
+            "o": 2
+          },
+          {
+            "t": "48 m",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 0,
+        "points": 1
+      },
+      {
+        "id": "Q6",
+        "category": "MATHS",
+        "text": "Solve the linear equation: x + 7 = 19. What is the value of x?",
+        "options": [
+          {
+            "t": "26",
+            "o": 0
+          },
+          {
+            "t": "12",
+            "o": 1
+          },
+          {
+            "t": "14",
+            "o": 2
+          },
+          {
+            "t": "-12",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 1,
+        "points": 1
+      },
+      {
+        "id": "Q7",
+        "category": "MATHS",
+        "text": "What is the Highest Common Factor (HCF) of 18 and 48?",
+        "options": [
+          {
+            "t": "3",
+            "o": 0
+          },
+          {
+            "t": "9",
+            "o": 1
+          },
+          {
+            "t": "6",
+            "o": 2
+          },
+          {
+            "t": "12",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 2,
+        "points": 1
+      },
+      {
+        "id": "Q8",
+        "category": "MATHS",
+        "text": "An angle whose measure is 135° is classified as an:",
+        "options": [
+          {
+            "t": "Acute angle",
+            "o": 0
+          },
+          {
+            "t": "Right angle",
+            "o": 1
+          },
+          {
+            "t": "Obtuse angle",
+            "o": 2
+          },
+          {
+            "t": "Reflex angle",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 2,
+        "points": 1
+      },
+      {
+        "id": "Q9",
+        "category": "MATHS",
+        "text": "If a school bus travels 180 km in 3 hours, what is its average speed in km/h?",
+        "options": [
+          {
+            "t": "50 km/h",
+            "o": 0
+          },
+          {
+            "t": "60 km/h",
+            "o": 1
+          },
+          {
+            "t": "45 km/h",
+            "o": 2
+          },
+          {
+            "t": "90 km/h",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 1,
+        "points": 1
+      },
+      {
+        "id": "Q10",
+        "category": "MATHS",
+        "text": "Which of the following is the smallest positive integer?",
+        "options": [
+          {
+            "t": "0",
+            "o": 0
+          },
+          {
+            "t": "-1",
+            "o": 1
+          },
+          {
+            "t": "1",
+            "o": 2
+          },
+          {
+            "t": "2",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 2,
+        "points": 1
+      }
+    ]
+  },
+  {
+    "id": "exam-vi-b-october-month-vi-maths-skill-test-2-53",
+    "code": "exam-vi-b-october-month-vi-maths-skill-test-2-53",
+    "title": "OCTOBER  MONTH VI - MATHS  SKILL TEST -27.10.2026",
+    "subject": "Maths",
+    "classSec": "VI B",
+    "allowedTeachers": [
+      "thayammal@spicschool.com"
+    ],
+    "status": "ACTIVE",
+    "scoreStatus": "RELEASED",
+    "examMins": 10,
+    "qCount": 10,
+    "totalMarks": 10,
+    "targetUrl": "https://docs.google.com/spreadsheets/d/1LydTdNKSNf0qFsrYN5R1l0n09GvP0uu9jk_0FgND0RY/",
+    "questions": [
+      {
+        "id": "Q1",
+        "category": "MATHS",
+        "text": "Evaluate the expression: (-12) + (+25) + (-8)",
+        "options": [
+          {
+            "t": "5",
+            "o": 0
+          },
+          {
+            "t": "-5",
+            "o": 1
+          },
+          {
+            "t": "13",
+            "o": 2
+          },
+          {
+            "t": "-13",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 0,
+        "points": 1
+      },
+      {
+        "id": "Q2",
+        "category": "MATHS",
+        "text": "Which of the following numbers is the predecessor of -49?",
+        "options": [
+          {
+            "t": "-48",
+            "o": 0
+          },
+          {
+            "t": "-50",
+            "o": 1
+          },
+          {
+            "t": "50",
+            "o": 2
+          },
+          {
+            "t": "48",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 1,
+        "points": 1
+      },
+      {
+        "id": "Q3",
+        "category": "MATHS",
+        "text": "Find the equivalent fraction of 3/5 with numerator 15:",
+        "options": [
+          {
+            "t": "15/20",
+            "o": 0
+          },
+          {
+            "t": "15/25",
+            "o": 1
+          },
+          {
+            "t": "15/30",
+            "o": 2
+          },
+          {
+            "t": "9/15",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 1,
+        "points": 1
+      },
+      {
+        "id": "Q4",
+        "category": "MATHS",
+        "text": "Express 25 millimetres in centimetres (cm):",
+        "options": [
+          {
+            "t": "0.25 cm",
+            "o": 0
+          },
+          {
+            "t": "250 cm",
+            "o": 1
+          },
+          {
+            "t": "2.5 cm",
+            "o": 2
+          },
+          {
+            "t": "0.025 cm",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 2,
+        "points": 1
+      },
+      {
+        "id": "Q5",
+        "category": "MATHS",
+        "text": "The length and breadth of a rectangular field are 12 m and 8 m. What is its perimeter?",
+        "options": [
+          {
+            "t": "40 m",
+            "o": 0
+          },
+          {
+            "t": "96 m",
+            "o": 1
+          },
+          {
+            "t": "20 m",
+            "o": 2
+          },
+          {
+            "t": "48 m",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 0,
+        "points": 1
+      },
+      {
+        "id": "Q6",
+        "category": "MATHS",
+        "text": "Solve the linear equation: x + 7 = 19. What is the value of x?",
+        "options": [
+          {
+            "t": "26",
+            "o": 0
+          },
+          {
+            "t": "12",
+            "o": 1
+          },
+          {
+            "t": "14",
+            "o": 2
+          },
+          {
+            "t": "-12",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 1,
+        "points": 1
+      },
+      {
+        "id": "Q7",
+        "category": "MATHS",
+        "text": "What is the Highest Common Factor (HCF) of 18 and 48?",
+        "options": [
+          {
+            "t": "3",
+            "o": 0
+          },
+          {
+            "t": "9",
+            "o": 1
+          },
+          {
+            "t": "6",
+            "o": 2
+          },
+          {
+            "t": "12",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 2,
+        "points": 1
+      },
+      {
+        "id": "Q8",
+        "category": "MATHS",
+        "text": "An angle whose measure is 135° is classified as an:",
+        "options": [
+          {
+            "t": "Acute angle",
+            "o": 0
+          },
+          {
+            "t": "Right angle",
+            "o": 1
+          },
+          {
+            "t": "Obtuse angle",
+            "o": 2
+          },
+          {
+            "t": "Reflex angle",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 2,
+        "points": 1
+      },
+      {
+        "id": "Q9",
+        "category": "MATHS",
+        "text": "If a school bus travels 180 km in 3 hours, what is its average speed in km/h?",
+        "options": [
+          {
+            "t": "50 km/h",
+            "o": 0
+          },
+          {
+            "t": "60 km/h",
+            "o": 1
+          },
+          {
+            "t": "45 km/h",
+            "o": 2
+          },
+          {
+            "t": "90 km/h",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 1,
+        "points": 1
+      },
+      {
+        "id": "Q10",
+        "category": "MATHS",
+        "text": "Which of the following is the smallest positive integer?",
+        "options": [
+          {
+            "t": "0",
+            "o": 0
+          },
+          {
+            "t": "-1",
+            "o": 1
+          },
+          {
+            "t": "1",
+            "o": 2
+          },
+          {
+            "t": "2",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 2,
+        "points": 1
+      }
+    ]
+  },
+  {
+    "id": "exam-vi-c-october-month-vi-maths-skill-test-2-54",
+    "code": "exam-vi-c-october-month-vi-maths-skill-test-2-54",
+    "title": "OCTOBER  MONTH VI - MATHS  SKILL TEST -27.10.2026",
+    "subject": "Maths",
+    "classSec": "VI C",
+    "allowedTeachers": [
+      "priyadharshini@spicschool.com"
+    ],
+    "status": "ACTIVE",
+    "scoreStatus": "RELEASED",
+    "examMins": 10,
+    "qCount": 10,
+    "totalMarks": 10,
+    "targetUrl": "https://docs.google.com/spreadsheets/d/1LydTdNKSNf0qFsrYN5R1l0n09GvP0uu9jk_0FgND0RY/",
+    "questions": [
+      {
+        "id": "Q1",
+        "category": "MATHS",
+        "text": "Evaluate the expression: (-12) + (+25) + (-8)",
+        "options": [
+          {
+            "t": "5",
+            "o": 0
+          },
+          {
+            "t": "-5",
+            "o": 1
+          },
+          {
+            "t": "13",
+            "o": 2
+          },
+          {
+            "t": "-13",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 0,
+        "points": 1
+      },
+      {
+        "id": "Q2",
+        "category": "MATHS",
+        "text": "Which of the following numbers is the predecessor of -49?",
+        "options": [
+          {
+            "t": "-48",
+            "o": 0
+          },
+          {
+            "t": "-50",
+            "o": 1
+          },
+          {
+            "t": "50",
+            "o": 2
+          },
+          {
+            "t": "48",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 1,
+        "points": 1
+      },
+      {
+        "id": "Q3",
+        "category": "MATHS",
+        "text": "Find the equivalent fraction of 3/5 with numerator 15:",
+        "options": [
+          {
+            "t": "15/20",
+            "o": 0
+          },
+          {
+            "t": "15/25",
+            "o": 1
+          },
+          {
+            "t": "15/30",
+            "o": 2
+          },
+          {
+            "t": "9/15",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 1,
+        "points": 1
+      },
+      {
+        "id": "Q4",
+        "category": "MATHS",
+        "text": "Express 25 millimetres in centimetres (cm):",
+        "options": [
+          {
+            "t": "0.25 cm",
+            "o": 0
+          },
+          {
+            "t": "250 cm",
+            "o": 1
+          },
+          {
+            "t": "2.5 cm",
+            "o": 2
+          },
+          {
+            "t": "0.025 cm",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 2,
+        "points": 1
+      },
+      {
+        "id": "Q5",
+        "category": "MATHS",
+        "text": "The length and breadth of a rectangular field are 12 m and 8 m. What is its perimeter?",
+        "options": [
+          {
+            "t": "40 m",
+            "o": 0
+          },
+          {
+            "t": "96 m",
+            "o": 1
+          },
+          {
+            "t": "20 m",
+            "o": 2
+          },
+          {
+            "t": "48 m",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 0,
+        "points": 1
+      },
+      {
+        "id": "Q6",
+        "category": "MATHS",
+        "text": "Solve the linear equation: x + 7 = 19. What is the value of x?",
+        "options": [
+          {
+            "t": "26",
+            "o": 0
+          },
+          {
+            "t": "12",
+            "o": 1
+          },
+          {
+            "t": "14",
+            "o": 2
+          },
+          {
+            "t": "-12",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 1,
+        "points": 1
+      },
+      {
+        "id": "Q7",
+        "category": "MATHS",
+        "text": "What is the Highest Common Factor (HCF) of 18 and 48?",
+        "options": [
+          {
+            "t": "3",
+            "o": 0
+          },
+          {
+            "t": "9",
+            "o": 1
+          },
+          {
+            "t": "6",
+            "o": 2
+          },
+          {
+            "t": "12",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 2,
+        "points": 1
+      },
+      {
+        "id": "Q8",
+        "category": "MATHS",
+        "text": "An angle whose measure is 135° is classified as an:",
+        "options": [
+          {
+            "t": "Acute angle",
+            "o": 0
+          },
+          {
+            "t": "Right angle",
+            "o": 1
+          },
+          {
+            "t": "Obtuse angle",
+            "o": 2
+          },
+          {
+            "t": "Reflex angle",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 2,
+        "points": 1
+      },
+      {
+        "id": "Q9",
+        "category": "MATHS",
+        "text": "If a school bus travels 180 km in 3 hours, what is its average speed in km/h?",
+        "options": [
+          {
+            "t": "50 km/h",
+            "o": 0
+          },
+          {
+            "t": "60 km/h",
+            "o": 1
+          },
+          {
+            "t": "45 km/h",
+            "o": 2
+          },
+          {
+            "t": "90 km/h",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 1,
+        "points": 1
+      },
+      {
+        "id": "Q10",
+        "category": "MATHS",
+        "text": "Which of the following is the smallest positive integer?",
+        "options": [
+          {
+            "t": "0",
+            "o": 0
+          },
+          {
+            "t": "-1",
+            "o": 1
+          },
+          {
+            "t": "1",
+            "o": 2
+          },
+          {
+            "t": "2",
+            "o": 3
+          }
+        ],
+        "correctAnswer": 2,
         "points": 1
       }
     ]

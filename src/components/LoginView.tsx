@@ -16,8 +16,9 @@ import {
   School, 
   Calendar, 
   CalendarDays, 
-  Sparkles, 
-  RotateCcw 
+  RotateCcw,
+  CheckCircle2,
+  ChevronDown
 } from 'lucide-react';
 
 interface LoginViewProps {
@@ -44,8 +45,8 @@ const DAYS = Array.from({ length: 31 }, (_, i) => {
   return d < 10 ? `0${d}` : `${d}`;
 });
 
-// School student birth years (approx. ages 4 to 22)
-const YEARS = Array.from({ length: 25 }, (_, i) => `${2022 - i}`);
+// School student birth years (spanning Class 1 through Class 12 / alumni)
+const YEARS = Array.from({ length: 30 }, (_, i) => `${2024 - i}`);
 
 export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   const [role, setRole] = useState<UserRole>('STUDENT');
@@ -112,8 +113,25 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   };
 
   const handleManualDobChange = (text: string) => {
-    setPassword(text);
-    const parts = text.split(/[-/]/);
+    // Retain only digits and slashes
+    let cleaned = text.replace(/[^\d/]/g, '');
+
+    // Auto-insert slashes if continuous digits are typed
+    if (!cleaned.includes('/') && cleaned.length > 2) {
+      if (cleaned.length <= 4) {
+        cleaned = `${cleaned.slice(0, 2)}/${cleaned.slice(2)}`;
+      } else {
+        cleaned = `${cleaned.slice(0, 2)}/${cleaned.slice(2, 4)}/${cleaned.slice(4, 8)}`;
+      }
+    }
+
+    if (cleaned.length > 10) {
+      cleaned = cleaned.slice(0, 10);
+    }
+
+    setPassword(cleaned);
+
+    const parts = cleaned.split('/');
     if (parts.length === 3 && parts[0].length === 2 && parts[1].length === 2 && parts[2].length === 4) {
       const [d, m, y] = parts;
       setDobDay(d);
@@ -237,9 +255,26 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
         {/* Role-specific guidance notes */}
         {role === 'STUDENT' && (
-          <div className="mb-4 p-3.5 bg-sky-50 border border-sky-200 rounded-2xl text-[11px] sm:text-xs text-sky-950 font-semibold flex items-center gap-2.5 shadow-xs">
-            <GraduationCap className="w-5 h-5 text-sky-700 shrink-0" />
-            <span><strong>Candidate Login:</strong> Enter your Exam Number and pick your Date of Birth password using the calendar or drop-down selectors.</span>
+          <div className="mb-4 p-3.5 bg-sky-50 border border-sky-200 rounded-2xl text-[11px] sm:text-xs text-sky-950 font-semibold flex items-center justify-between gap-2.5 shadow-xs">
+            <div className="flex items-center gap-2.5">
+              <GraduationCap className="w-5 h-5 text-sky-700 shrink-0" />
+              <span><strong>Candidate Portal:</strong> Enter your Exam Number and registered Date of Birth (DOB) as password.</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setUserId('6105');
+                setDobDay('12');
+                setDobMonth('07');
+                setDobYear('2015');
+                setPassword('12/07/2015');
+                setIsoDate('2015-07-12');
+              }}
+              className="hidden sm:inline-flex items-center text-[11px] bg-sky-100 hover:bg-sky-200 text-sky-800 font-bold px-2.5 py-1 rounded-lg transition cursor-pointer shrink-0 border border-sky-200"
+              title="Quick fill test credentials (Exam: 6105, DOB: 12/07/2015)"
+            >
+              Demo Fill
+            </button>
           </div>
         )}
         {role === 'TEACHER' && (
@@ -358,170 +393,187 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
               required
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
-              placeholder={role === 'STUDENT' ? 'e.g. S26105' : role === 'TEACHER' ? 'e.g. teacher@spicschool.com' : 'e.g. administrator'}
-              className="w-full border-2 border-slate-200 rounded-xl p-3 sm:p-3.5 bg-slate-50 font-bold text-slate-900 focus:border-indigo-600 focus:bg-white outline-none transition text-sm"
+              placeholder={role === 'STUDENT' ? 'e.g. 6105 or S26105' : role === 'TEACHER' ? 'e.g. teacher@spicschool.com' : 'e.g. administrator'}
+              className="w-full h-12 border-2 border-slate-200 rounded-xl px-3.5 bg-slate-50 font-bold text-slate-900 focus:border-indigo-600 focus:bg-white outline-none transition text-sm shadow-xs"
             />
           </div>
 
           {/* Password / DOB Field */}
           {role === 'STUDENT' ? (
-            <div className="space-y-3 bg-indigo-50/60 p-4 sm:p-5 rounded-2xl border border-indigo-200 shadow-xs">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
-                <label className="text-[11px] font-black text-indigo-950 uppercase tracking-wider flex items-center gap-1.5">
-                  <Calendar className="w-4 h-4 text-indigo-600" />
-                  <span>Password: Date of Birth</span>
-                  <span className="text-[10px] text-indigo-600 font-bold bg-indigo-100 px-1.5 py-0.5 rounded-md uppercase">DOB</span>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Date of Birth (Password)</span>
                 </label>
                 <button
                   type="button"
                   onClick={() => setManualDobMode(!manualDobMode)}
-                  className="text-[11px] font-bold text-indigo-700 hover:text-indigo-950 underline transition cursor-pointer self-start sm:self-auto flex items-center gap-1"
+                  className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 transition cursor-pointer flex items-center gap-1 hover:underline"
                 >
-                  {manualDobMode ? '📅 Use Date Picker' : '⌨️ Type DD/MM/YYYY'}
+                  {manualDobMode ? (
+                    <span>Use Dropdown Selectors</span>
+                  ) : (
+                    <span>Type DD/MM/YYYY</span>
+                  )}
                 </button>
               </div>
 
               {!manualDobMode ? (
-                <div className="space-y-3">
-                  {/* Option 1: Native Responsive Calendar Picker */}
-                  <div>
-                    <label htmlFor="student-dob-picker" className="block text-[11px] font-bold text-slate-600 mb-1.5">
-                      Choose Date from Calendar:
-                    </label>
-                    <div className="flex flex-col sm:flex-row items-stretch gap-2">
-                      <div className="relative flex-1">
-                        <input
-                          ref={dateInputRef}
-                          id="student-dob-picker"
-                          type="date"
-                          min="1995-01-01"
-                          max="2024-12-31"
-                          value={isoDate}
-                          onChange={(e) => handleIsoDateChange(e.target.value)}
-                          className="w-full border-2 border-indigo-200 hover:border-indigo-400 focus:border-indigo-600 rounded-xl p-3 bg-white font-bold text-slate-900 outline-none transition text-sm cursor-pointer shadow-xs min-h-[44px]"
-                          aria-label="Select Date of Birth from Calendar"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={openDatePicker}
-                        className="px-4 py-3 bg-indigo-600 hover:bg-indigo-700 active:scale-98 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition cursor-pointer shrink-0 min-h-[44px]"
-                      >
-                        <CalendarDays className="w-4 h-4" />
-                        <span>Pick Date 📅</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Option 2: Quick Dropdowns (Day, Month, Year) - Super easy for younger kids */}
-                  <div className="space-y-1.5 pt-1 border-t border-indigo-100">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                      Or select Day, Month & Year:
-                    </span>
-                    <div className="grid grid-cols-3 gap-2">
-                      <div>
-                        <label htmlFor="dob-day-select" className="sr-only">Birth Day</label>
+                <div className="space-y-2">
+                  <div className="grid grid-cols-12 gap-2">
+                    {/* Day Dropdown */}
+                    <div className="col-span-3">
+                      <label htmlFor="dob-day-select" className="sr-only">Birth Day</label>
+                      <div className="relative">
                         <select
                           id="dob-day-select"
                           value={dobDay}
                           onChange={(e) => handlePartChange('day', e.target.value)}
-                          className="w-full border-2 border-indigo-200 hover:border-indigo-400 focus:border-indigo-600 rounded-xl p-2.5 sm:p-3 bg-white font-bold text-slate-800 text-xs sm:text-sm outline-none transition cursor-pointer shadow-xs min-h-[42px]"
+                          className="w-full h-12 border-2 border-slate-200 hover:border-slate-300 focus:border-indigo-600 focus:bg-white rounded-xl pl-3 pr-6 sm:pr-7 bg-slate-50 font-bold text-slate-900 text-xs sm:text-sm outline-none transition cursor-pointer shadow-xs appearance-none"
+                          aria-label="Select Birth Day"
                         >
-                          <option value="">Day</option>
+                          <option value="">DD</option>
                           {DAYS.map(d => (
                             <option key={d} value={d}>{d}</option>
                           ))}
                         </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400">
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </div>
                       </div>
+                    </div>
 
-                      <div>
-                        <label htmlFor="dob-month-select" className="sr-only">Birth Month</label>
+                    {/* Month Dropdown */}
+                    <div className="col-span-4">
+                      <label htmlFor="dob-month-select" className="sr-only">Birth Month</label>
+                      <div className="relative">
                         <select
                           id="dob-month-select"
                           value={dobMonth}
                           onChange={(e) => handlePartChange('month', e.target.value)}
-                          className="w-full border-2 border-indigo-200 hover:border-indigo-400 focus:border-indigo-600 rounded-xl p-2.5 sm:p-3 bg-white font-bold text-slate-800 text-xs sm:text-sm outline-none transition cursor-pointer shadow-xs min-h-[42px]"
+                          className="w-full h-12 border-2 border-slate-200 hover:border-slate-300 focus:border-indigo-600 focus:bg-white rounded-xl pl-2.5 sm:pl-3 pr-6 sm:pr-7 bg-slate-50 font-bold text-slate-900 text-xs sm:text-sm outline-none transition cursor-pointer shadow-xs appearance-none truncate"
+                          aria-label="Select Birth Month"
                         >
                           <option value="">Month</option>
                           {MONTHS.map(m => (
                             <option key={m.value} value={m.value}>{m.label}</option>
                           ))}
                         </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400">
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </div>
                       </div>
+                    </div>
 
-                      <div>
-                        <label htmlFor="dob-year-select" className="sr-only">Birth Year</label>
+                    {/* Year Dropdown */}
+                    <div className="col-span-3">
+                      <label htmlFor="dob-year-select" className="sr-only">Birth Year</label>
+                      <div className="relative">
                         <select
                           id="dob-year-select"
                           value={dobYear}
                           onChange={(e) => handlePartChange('year', e.target.value)}
-                          className="w-full border-2 border-indigo-200 hover:border-indigo-400 focus:border-indigo-600 rounded-xl p-2.5 sm:p-3 bg-white font-bold text-slate-800 text-xs sm:text-sm outline-none transition cursor-pointer shadow-xs min-h-[42px]"
+                          className="w-full h-12 border-2 border-slate-200 hover:border-slate-300 focus:border-indigo-600 focus:bg-white rounded-xl pl-2 sm:pl-3 pr-6 sm:pr-7 bg-slate-50 font-bold text-slate-900 text-xs sm:text-sm outline-none transition cursor-pointer shadow-xs appearance-none"
+                          aria-label="Select Birth Year"
                         >
-                          <option value="">Year</option>
+                          <option value="">YYYY</option>
                           {YEARS.map(y => (
                             <option key={y} value={y}>{y}</option>
                           ))}
                         </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400">
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </div>
                       </div>
+                    </div>
+
+                    {/* Integrated Calendar Trigger */}
+                    <div className="col-span-2">
+                      <input
+                        ref={dateInputRef}
+                        id="student-dob-picker"
+                        type="date"
+                        min="1995-01-01"
+                        max="2024-12-31"
+                        value={isoDate}
+                        onChange={(e) => handleIsoDateChange(e.target.value)}
+                        className="sr-only"
+                        tabIndex={-1}
+                        aria-hidden="true"
+                      />
+                      <button
+                        type="button"
+                        id="btn-open-calendar-picker"
+                        onClick={openDatePicker}
+                        title="Choose date from calendar popup"
+                        className="w-full h-12 bg-slate-50 hover:bg-indigo-50 border-2 border-slate-200 hover:border-indigo-400 active:scale-95 rounded-xl flex items-center justify-center text-indigo-600 hover:text-indigo-800 transition cursor-pointer shadow-xs"
+                      >
+                        <CalendarDays className="w-5 h-5" />
+                      </button>
                     </div>
                   </div>
 
-                  {/* Visual Confirmation Card */}
+                  {/* Feedback indicator */}
                   {password ? (
-                    <div className="bg-emerald-50 border border-emerald-300 rounded-xl p-3 flex items-center justify-between text-xs text-emerald-950 font-medium shadow-xs">
+                    <div className="flex items-center justify-between px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs shadow-xs animate-in fade-in duration-200">
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">🎂</span>
-                        <div>
-                          <div className="font-bold text-emerald-900 flex items-center gap-1.5 flex-wrap">
-                            <span>Your Birthday Password:</span>
-                            <span className="font-mono font-black text-emerald-900 bg-emerald-200/70 px-2 py-0.5 rounded border border-emerald-400">
-                              {password}
-                            </span>
-                          </div>
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span className="text-slate-700 font-semibold">
+                          DOB Password: <strong className="font-mono text-indigo-950 font-black">{password}</strong>
                           {dobDay && dobMonth && dobYear && (
-                            <div className="text-[11px] text-emerald-700 mt-0.5">
-                              {dobDay} {MONTHS.find(m => m.value === dobMonth)?.name} {dobYear}
-                            </div>
+                            <span className="text-slate-500 ml-1.5 hidden sm:inline">
+                              ({dobDay} {MONTHS.find(m => m.value === dobMonth)?.name} {dobYear})
+                            </span>
                           )}
-                        </div>
+                        </span>
                       </div>
                       <button
                         type="button"
                         onClick={handleClearDob}
-                        className="text-[11px] font-bold text-emerald-700 hover:text-emerald-950 flex items-center gap-1 px-2 py-1 rounded-md hover:bg-emerald-100 transition cursor-pointer"
+                        className="text-[11px] font-bold text-slate-500 hover:text-rose-600 flex items-center gap-1 cursor-pointer transition"
                       >
                         <RotateCcw className="w-3 h-3" />
                         <span>Clear</span>
                       </button>
                     </div>
                   ) : (
-                    <div className="text-[11px] text-indigo-900/80 font-medium flex items-center gap-1.5 bg-indigo-100/60 p-2.5 rounded-xl border border-indigo-200/60">
-                      <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
-                      <span>Select your birthday above. It automatically formats to <code>DD/MM/YYYY</code>.</span>
+                    <div className="flex items-center justify-between text-[11px] text-slate-400 px-1 font-medium">
+                      <span>Select Day, Month, Year or tap calendar icon</span>
+                      <span className="font-mono">DD/MM/YYYY</span>
                     </div>
                   )}
                 </div>
               ) : (
-                /* Manual entry mode */
-                <div className="space-y-2">
+                /* Direct formatted input mode */
+                <div className="space-y-1.5">
                   <div className="relative">
                     <input
                       id="login-pass-manual"
                       type="text"
                       required
+                      maxLength={10}
                       value={password}
                       onChange={(e) => handleManualDobChange(e.target.value)}
                       placeholder="DD/MM/YYYY (e.g. 12/07/2015)"
-                      className="w-full border-2 border-indigo-200 rounded-xl p-3 sm:p-3.5 bg-white font-bold text-slate-900 focus:border-indigo-600 outline-none transition text-sm font-mono shadow-xs"
+                      className="w-full h-12 border-2 border-slate-200 rounded-xl px-3.5 pr-12 bg-slate-50 font-bold text-slate-900 focus:border-indigo-600 focus:bg-white outline-none transition text-sm font-mono shadow-xs"
                     />
+                    <button
+                      type="button"
+                      onClick={openDatePicker}
+                      title="Choose from calendar dialog"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-indigo-600 transition cursor-pointer"
+                    >
+                      <CalendarDays className="w-5 h-5" />
+                    </button>
                   </div>
-                  <p className="text-[11px] text-slate-500 font-medium">
-                    Type Day / Month / Year with slashes (e.g., <code>12/07/2015</code>).
+                  <p className="text-[11px] text-slate-500 px-1 font-medium">
+                    Format: 2-digit day, 2-digit month, 4-digit year (e.g. <code>12/07/2015</code>)
                   </p>
                 </div>
               )}
 
-              {/* Maintain standard id="login-pass" for accessibility and form references */}
+              {/* Form accessibility hidden reference */}
               <input id="login-pass" type="hidden" value={password} />
             </div>
           ) : (
@@ -539,7 +591,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full border-2 border-slate-200 rounded-xl p-3 sm:p-3.5 pr-12 bg-slate-50 font-bold text-slate-900 focus:border-indigo-600 focus:bg-white outline-none transition text-sm font-mono"
+                  className="w-full h-12 border-2 border-slate-200 rounded-xl px-3.5 pr-12 bg-slate-50 font-bold text-slate-900 focus:border-indigo-600 focus:bg-white outline-none transition text-sm font-mono shadow-xs"
                 />
                 <button
                   type="button"

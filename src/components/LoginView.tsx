@@ -5,7 +5,7 @@ import {
   authenticateByEmail, 
   signInWithGoogleSSO 
 } from '../services/firebase';
-import { Eye, EyeOff, KeyRound, User, Lock } from 'lucide-react';
+import { Eye, EyeOff, KeyRound, User, Lock, ShieldCheck, GraduationCap, School } from 'lucide-react';
 
 interface LoginViewProps {
   onLoginSuccess: (user: AuthUser) => void;
@@ -83,86 +83,78 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   return (
     <div className="p-4 sm:p-8 max-w-4xl mx-auto min-h-[60vh] flex flex-col justify-center">
       <div className="max-w-xl mx-auto w-full">
-        {/* Official School Crest & Brand Banner */}
+        {/* Portal Authentication Header (Eliminating redundant school crest since top Navbar displays official crest) */}
         <div className="text-center mb-6">
-          <div className="w-28 h-28 sm:w-32 sm:h-32 mx-auto mb-3.5 bg-white p-2 rounded-3xl border-2 border-amber-400 shadow-md flex items-center justify-center">
-            <img 
-              src="/school-logo.png" 
-              alt="SPIC Nagar Higher Secondary School Emblem" 
-              className="w-full h-full object-contain"
-              referrerPolicy="no-referrer"
-            />
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-950 text-amber-400 border-2 border-amber-400/60 shadow-md mb-3 ring-4 ring-indigo-950/10">
+            <ShieldCheck className="w-7 h-7" />
           </div>
-          <h2 className="text-xl sm:text-2xl font-black text-indigo-950 uppercase tracking-wide leading-tight">
-            SPIC NAGAR HR. SEC. SCHOOL
+          <h2 className="text-xl sm:text-2xl font-black text-indigo-950 uppercase tracking-tight">
+            Portal Authentication
           </h2>
-          <p className="text-xs sm:text-sm font-bold text-amber-600 mt-0.5 tracking-wider uppercase">
-            Towards a Better World
-          </p>
-          <p className="text-[11px] font-semibold text-slate-500 mt-1">
-            Universal Digital Assessment Portal
+          <p className="text-xs sm:text-sm font-semibold text-slate-500 mt-1">
+            Sign in to access your digital examination and assessment workspace
           </p>
         </div>
 
-        {/* Domain email guidance note */}
+        {/* Role-specific guidance notes */}
+        {role === 'STUDENT' && (
+          <div className="mb-4 p-3 bg-sky-50 border border-sky-200 rounded-2xl text-[11px] sm:text-xs text-sky-950 font-semibold flex items-center gap-2 shadow-xs">
+            <GraduationCap className="w-4 h-4 text-sky-700 shrink-0" />
+            <span><strong>Candidate Login:</strong> Enter your Exam Number and Date of Birth password (<code>DD/MM/YYYY</code>).</span>
+          </div>
+        )}
         {role === 'TEACHER' && (
-          <div className="mb-4 p-3 bg-indigo-50 border border-indigo-200 rounded-2xl text-[11px] text-indigo-950 font-bold flex items-center justify-between">
-            <div>
-              <span>🏫 <strong>Faculty Portal:</strong> Sign in with your school email </span>
-            </div>
+          <div className="mb-4 p-3 bg-indigo-50 border border-indigo-200 rounded-2xl text-[11px] sm:text-xs text-indigo-950 font-semibold flex items-center gap-2 shadow-xs">
+            <School className="w-4 h-4 text-indigo-700 shrink-0" />
+            <span><strong>Faculty Portal:</strong> Sign in with your registered school email address or Google SSO.</span>
           </div>
         )}
         {role === 'ADMIN' && (
-          <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-2xl text-[11px] text-purple-950 font-bold flex items-center justify-between">
-            <div>
-              
-            </div>
-          </div>
-        )}
-        {role === 'STUDENT' && (
-          <div className="mb-4 p-3 bg-slate-100 border border-slate-200 rounded-2xl text-[11px] text-slate-800 font-bold flex items-center justify-between">
-            <div>
-              <span>🎓 <strong>Student Examination Login:</strong> Enter your Admission Number and Password (Date of Birth: <code>DD/MM/YYYY</code>).</span>
-            </div>
+          <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-2xl text-[11px] sm:text-xs text-purple-950 font-semibold flex items-center gap-2 shadow-xs">
+            <ShieldCheck className="w-4 h-4 text-purple-700 shrink-0" />
+            <span><strong>Administrative Access:</strong> Sign in with administrator credentials to manage papers, rosters, and live sync.</span>
           </div>
         )}
         {/* Role Tabs */}
-        <div className="flex bg-slate-100 rounded-xl p-1.5 mb-6 border border-slate-200 gap-1 overflow-x-auto shadow-inner">
+        <div className="flex bg-slate-100 rounded-2xl p-1.5 mb-6 border border-slate-200 gap-1.5 overflow-x-auto shadow-inner">
           <button
             id="btn-tab-student"
             type="button"
             onClick={() => { setRole('STUDENT'); setErrorMessage(''); }}
-            className={`flex-1 min-w-[100px] py-2.5 sm:py-3 font-black text-xs sm:text-sm rounded-lg transition-all cursor-pointer ${
+            className={`flex-1 min-w-[110px] py-2.5 sm:py-3 px-3 font-bold text-xs sm:text-sm rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
               role === 'STUDENT'
-                ? 'bg-white shadow text-indigo-700'
-                : 'text-slate-500 hover:text-slate-800'
+                ? 'bg-white shadow-sm text-indigo-900 border border-slate-200/80 font-black'
+                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/60'
             }`}
           >
-            Student Login
+            <GraduationCap className={`w-4 h-4 ${role === 'STUDENT' ? 'text-indigo-600' : 'text-slate-400'}`} />
+            <span>Student</span>
           </button>
           <button
             id="btn-tab-teacher"
             type="button"
             onClick={() => { setRole('TEACHER'); setErrorMessage(''); }}
-            className={`flex-1 min-w-[100px] py-2.5 sm:py-3 font-black text-xs sm:text-sm rounded-lg transition-all cursor-pointer ${
+            className={`flex-1 min-w-[110px] py-2.5 sm:py-3 px-3 font-bold text-xs sm:text-sm rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
               role === 'TEACHER'
-                ? 'bg-white shadow text-indigo-700'
-                : 'text-slate-500 hover:text-slate-800'
+                ? 'bg-white shadow-sm text-indigo-900 border border-slate-200/80 font-black'
+                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/60'
             }`}
           >
-            Teacher Login
+            <School className={`w-4 h-4 ${role === 'TEACHER' ? 'text-indigo-600' : 'text-slate-400'}`} />
+            <span>Teacher</span>
           </button>
           <button
             id="btn-tab-admin"
             type="button"
             onClick={() => { setRole('ADMIN'); setErrorMessage(''); }}
-            className={`flex-1 min-w-[100px] py-2.5 sm:py-3 font-black text-xs sm:text-sm rounded-lg transition-all cursor-pointer ${
+            className={`flex-1 min-w-[110px] py-2.5 sm:py-3 px-3 font-bold text-xs sm:text-sm rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
               role === 'ADMIN'
-                ? 'bg-white shadow text-indigo-700'
-                : 'text-slate-500 hover:text-slate-800'
+                ? 'bg-white shadow-sm text-indigo-900 border border-slate-200/80 font-black'
+                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/60'
             }`}
           >
-            Admin Login
+            <ShieldCheck className={`w-4 h-4 ${role === 'ADMIN' ? 'text-indigo-600' : 'text-slate-400'}`} />
+            <span>Admin</span>
           </button>
         </div>
 
